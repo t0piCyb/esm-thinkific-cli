@@ -1,0 +1,25 @@
+{
+  "name": "esm-thinkific-cli",
+  "version": "0.1.0",
+  "description": "CLI for Thinkific (Encounter's course site) used by Encounter ESM: courses, chapters, lessons, lesson HTML, export",
+  "type": "module",
+  "bin": {
+    "esm-thinkific-cli": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "bun build src/index.ts --outfile dist/index.js --target bun",
+    "dev": "bun run src/index.ts",
+    "test": "bun test",
+    "ts": "tsc --noEmit",
+    "schema": "bun run scripts/update-schema.ts"
+  },
+  "dependencies": {
+    "commander": "^13.0.0",
+    "picocolors": "^1.1.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "graphql": "16.9.0",
+    "typescript": "^5.7.0"
+  }
+}

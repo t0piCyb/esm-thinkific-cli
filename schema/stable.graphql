@@ -1,0 +1,7536 @@
+"""
+The default access type for a community. A null value indicates only admins have access.
+"""
+enum AccessType {
+  """All access type"""
+  TYPE_ALL
+
+  """Group access type"""
+  TYPE_GROUP
+
+  """Product access type"""
+  TYPE_PRODUCT
+
+  """Purchased access type"""
+  TYPE_PURCHASED
+}
+
+"""
+Defines the fields for assigning a custom role to a user, with optional resource scoping.
+"""
+input AssignCustomRoleInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The ID of the custom role to assign."""
+  customRoleId: ID!
+
+  """Optional resource scoping for the assignment, by resource type."""
+  resourceScopeSelections: [ResourceScopeSelectionInput!]
+
+  """Explicit resource scopes required for scoped permissions."""
+  resourceScopes: [ResourceScopeInput!] @deprecated(reason: "Use resourceScopeSelections")
+
+  """The GID of the user to assign the role to."""
+  userGid: ID
+}
+
+"""Returns the role assignment on success, or validation errors."""
+type AssignCustomRolePayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """Errors on the input of a mutation"""
+  userErrors: [UserError!]
+
+  """The newly created role assignment."""
+  userRole: CustomRoleAssignment
+}
+
+"""
+Defines the fields for adding resource scopes to an existing custom role assignment.
+"""
+input AssignCustomRoleResourceScopesInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The ID of the custom role whose assignment is being updated."""
+  customRoleId: ID!
+
+  """The additional resource scopes to grant."""
+  resourceScopes: [ResourceScopeInput!]!
+
+  """The GID of the user whose access is being expanded."""
+  userGid: ID
+}
+
+"""
+Returns the updated role assignment with expanded scopes, or validation errors.
+"""
+type AssignCustomRoleResourceScopesPayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """Errors on the input of a mutation"""
+  userErrors: [UserError!]
+
+  """The updated role assignment with expanded resource access."""
+  userRole: CustomRoleAssignment
+}
+
+"""
+Defines the fields for assigning built-in roles to a team member, with optional resource scoping.
+"""
+input AssignDefaultRolesInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """Optional resource scoping for the assigned roles, by resource type."""
+  resourceScopeSelections: [ResourceScopeSelectionInput!]
+
+  """
+  Resource scopes to assign alongside the roles (e.g. courses for Course Admin).
+  """
+  resourceScopes: [ResourceScopeInput!] @deprecated(reason: "Use resourceScopeSelections")
+
+  """The stable identifiers of the default roles to assign."""
+  roleSlugs: [DefaultRoleSlug!]!
+
+  """The GID of the user to assign roles to."""
+  userGid: ID
+}
+
+"""Returns the updated team member on success, or validation errors."""
+type AssignDefaultRolesPayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The team member with their updated roles."""
+  teamMember: TeamMember
+
+  """Errors on the input of a mutation"""
+  userErrors: [UserError!]
+}
+
+"""Represents an Assignment Content"""
+type AssignmentContent implements ContentInterface {
+  """A confirmation message that appears after the Assignment is uploaded"""
+  confirmationMessage: String
+
+  """Represents the type of the Content"""
+  contentType: ContentType!
+
+  """The date when the Content was created"""
+  createdAt: DateTime!
+
+  """The maximum upload file size allowed for the Assignment in megabytes"""
+  fileSizeLimit: Int
+
+  """The unique Content ID"""
+  id: ID!
+
+  """The Lesson the Assignment belongs to"""
+  lesson: Lesson
+
+  """Submissions for the assignment"""
+  submissions(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): AssignmentSubmissionConnection
+
+  """Represents an optional template file for the Assignment"""
+  template: AssignmentTemplate
+
+  """The date when the Content was updated"""
+  updatedAt: DateTime!
+}
+
+"""Represents information about Assignment submission files"""
+type AssignmentFile implements FileInterface {
+  """The name of the file"""
+  name: String
+
+  """The size of the file in bytes"""
+  rawSize: Int
+
+  """The human readable file size - e.g. 320 KB"""
+  size: String
+
+  """The file type - e.g. image/png"""
+  type: MIME
+
+  """The URL address used to download the file"""
+  url: URL
+}
+
+"""Represents information about a student's assignment submission"""
+type AssignmentSubmission {
+  """The content of the Assignment"""
+  assignment: AssignmentContent
+
+  """The Course associated with the Assignment"""
+  course: Course
+
+  """The date the submission was created"""
+  createdAt: DateTime!
+
+  """The file submitted for the assignment"""
+  file: AssignmentFile
+
+  """The unique ID of the submission"""
+  id: ID!
+
+  """
+  Number of prior attempts for this learner on the same assignment (sidebar; 0 when this is the first)
+  """
+  previousSubmissionCount: Int!
+
+  """The date the submission was last reviewed"""
+  reviewedAt: DateTime
+
+  """
+  The admin who last reviewed (approved or rejected) the submission; null for auto-approve and legacy rows
+  """
+  reviewer: User
+
+  """The status of the submission"""
+  status: AssignmentSubmissionStatus
+
+  """The date the submission was last updated"""
+  updatedAt: DateTime!
+
+  """The User that submitted the Assignment"""
+  user: User
+}
+
+"""The connection type for AssignmentSubmission."""
+type AssignmentSubmissionConnection {
+  """A list of edges."""
+  edges: [AssignmentSubmissionEdge]
+
+  """A list of nodes."""
+  nodes: [AssignmentSubmission]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""
+Aggregate counts of Assignment submissions for the Site, split by review state
+"""
+type AssignmentSubmissionCounts {
+  """Count of submissions awaiting review"""
+  pending: Int!
+
+  """Count of submissions that have been approved or rejected"""
+  reviewed: Int!
+
+  """Total submissions matching the filter (any status)"""
+  total: Int!
+}
+
+"""An edge in a connection."""
+type AssignmentSubmissionEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: AssignmentSubmission
+}
+
+"""UpdateAssignmentSubmissionStatus mutation input error"""
+type AssignmentSubmissionError {
+  """The error code"""
+  code: AssignmentSubmissionErrorCode
+
+  """Description of the error"""
+  message: String!
+
+  """Path to the input field that caused the error"""
+  path: [String!]
+}
+
+"""Error codes used by assignment mutation"""
+enum AssignmentSubmissionErrorCode {
+  """Submission's status has been updated but email send has failed."""
+  EMAIL_FAILED
+
+  """A grade can only be given when approving."""
+  GRADE_NOT_ALLOWED
+
+  """This assignment has a passing grade. Enter a grade to approve it."""
+  GRADE_REQUIRED
+
+  """Grades and feedback are only available for canvas assignments."""
+  GRADING_NOT_SUPPORTED
+
+  """Submission not found."""
+  NOT_FOUND
+
+  """Submission's status already has been set."""
+  NOT_VALID
+
+  """Submission's status could not be updated."""
+  UPDATE_FAILED
+}
+
+"""A filter used to get a subset of assignment submissions."""
+input AssignmentSubmissionFilter {
+  """A list of course ids to filter by"""
+  courseIds: [ID!]
+
+  """A list of group ids to filter by"""
+  groupIds: [ID!]
+
+  """
+  When true, one row per learner and assignment: the newest attempt by created_at, then id. Applies to Canvas and Classic.
+  """
+  latestOnly: Boolean
+
+  """
+  Free-text search across learner name, assignment title, and course name
+  """
+  search: String
+
+  """Filter by submission status"""
+  status: AssignmentSubmissionStatus @deprecated(reason: "Use statuses instead.")
+
+  """Filter by submission statuses (OR logic)"""
+  statuses: [AssignmentSubmissionStatus!]
+
+  """A list of user ids to filter by"""
+  userIds: [ID!]
+}
+
+"""Submission versions and email audit for one learner on one assignment"""
+type AssignmentSubmissionHistory {
+  """Assignment title for modal subtitles"""
+  assignmentTitle: String
+
+  """Chapter name for modal subtitles"""
+  chapterName: String
+
+  """Course name for modal subtitles"""
+  courseName: String
+
+  """Latest attempt by created_at"""
+  currentSubmission: AssignmentSubmission
+
+  """Prior attempts count (max(0, totalVersions - 1))"""
+  previousSubmissionCount: Int!
+
+  """All attempts, newest first for the history modal"""
+  submissions: [SubmissionVersion!]!
+
+  """Learner"""
+  user: User!
+}
+
+"""Possible fields to order Assignment submissions"""
+input AssignmentSubmissionOrderBy {
+  direction: OrderDirection!
+  field: AssignmentSubmissionOrderByField!
+}
+
+"""Fields available for ordering Assignment submissions"""
+enum AssignmentSubmissionOrderByField {
+  """Order by the resolved chapter name"""
+  CHAPTER_NAME
+
+  """Order by the resolved course name"""
+  COURSE_NAME
+
+  """Order by the submission created date"""
+  CREATED_AT
+
+  """Order by the resolved lesson name"""
+  LESSON_NAME
+
+  """Order by reviewed at date"""
+  REVIEWED_AT
+
+  """Order by Assignment Submission status"""
+  STATUS
+}
+
+"""Possible assignment submission status type values"""
+enum AssignmentSubmissionStatus {
+  """Submission has been approved"""
+  APPROVED
+
+  """Submission has not yet been reviewed"""
+  PENDING
+
+  """Submission has been rejected"""
+  REJECTED
+
+  """Submission was replaced by a later attempt and is no longer reviewable"""
+  SUPERSEDED
+}
+
+"""
+Represents an Assignment Template, which is a file that assists students in completing their assignment
+"""
+type AssignmentTemplate {
+  """The name of the Assignment Template"""
+  fileName: String
+
+  """The size of the Assignment Template - e.g. 320 KB"""
+  fileSize: String
+
+  """Assignment Template ID"""
+  id: ID!
+
+  """The URL address to download the Assignment Template"""
+  url: URL
+}
+
+"""Post attachments"""
+type Attachment {
+  """The alt text"""
+  altText: String
+
+  """The id of the attachment"""
+  id: ID!
+
+  """The file name"""
+  name: String
+
+  """The file size"""
+  rawSize: Int
+
+  """The attachment url"""
+  url(
+    """Returns video_upload url by HLS format"""
+    hlsFormat: Boolean = false
+  ): URL
+}
+
+"""The connection type for Attachment."""
+type AttachmentConnection {
+  """A list of edges."""
+  edges: [AttachmentEdge]
+
+  """A list of nodes."""
+  nodes: [Attachment]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type AttachmentEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: Attachment
+}
+
+"""The type of the post attachment"""
+enum AttachmentType {
+  """File attachment type"""
+  FILE
+
+  """Image attachment type"""
+  IMAGE
+
+  """Video attachment type"""
+  VIDEO
+
+  """Video Upload attachment type"""
+  VIDEO_UPLOAD
+}
+
+"""Represents an Audio Content"""
+type AudioContent implements ContentInterface {
+  """Represents the type of the Content"""
+  contentType: ContentType!
+
+  """The date when the Content was created"""
+  createdAt: DateTime!
+
+  """The description of the Audio in HTML format"""
+  htmlDescription: HTML
+
+  """The unique Content ID"""
+  id: ID!
+
+  """Represents individual settings specific to the Audio content"""
+  settings: AudioContentSettings!
+
+  """The date when the Content was updated"""
+  updatedAt: DateTime!
+
+  """The URL address used to play the Audio"""
+  url: URL
+}
+
+"""Represents individual settings specific to the Audio content"""
+type AudioContentSettings {
+  """Whether autoplay has been enabled for the Content"""
+  autoplayEnabled: Boolean!
+
+  """Whether the Audio content can be downloaded"""
+  downloadable: Boolean!
+}
+
+"""Scorm Cmi Progress Interface"""
+interface BaseProgress {
+  """The comments"""
+  comments: [ScormComment!]!
+
+  """The completion status"""
+  completionStatus: String
+
+  """The date when the Cmi Progress was created"""
+  createdAt: DateTime!
+
+  """The SCORM CMI Progress ID"""
+  id: ID!
+
+  """The interactions"""
+  interactions: [ScormInteraction!]!
+
+  """The objectives"""
+  objectives: [ScormObjective!]!
+
+  """The pass/fail"""
+  passFail: String
+
+  """The session time"""
+  sessionTime: String
+
+  """The date when the Cmi Progress was updated"""
+  updatedAt: DateTime!
+
+  """The SCORM version"""
+  version: String!
+}
+
+"""The connection type for BaseProgress."""
+type BaseProgressConnection {
+  """A list of edges."""
+  edges: [BaseProgressEdge]
+
+  """A list of nodes."""
+  nodes: [BaseProgress]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type BaseProgressEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: BaseProgress
+}
+
+"""Represents information about brand styles for tenant"""
+type BrandStyle {
+  """The accent background color brand style for the site"""
+  accentBgColor: String!
+
+  """The accent cta bg color brand style for the site"""
+  accentCtaBgColor: String!
+
+  """The accent cta text color brand style for the site"""
+  accentCtaTextColor: String!
+
+  """The accent text color brand style for the site"""
+  accentTextColor: String!
+
+  """The body font weight global style for the site"""
+  bodyFontWeight: String!
+
+  """The button border radius brand style for the site"""
+  buttonBorderRadius: String!
+
+  """The button font weight global style for the site"""
+  buttonFontWeight: String!
+
+  """The CTA background color brand style for the site"""
+  ctaBgColor: String!
+
+  """The CTA text color brand style for the site"""
+  ctaTextColor: String!
+
+  """The input border color brand style for the site"""
+  inputBorderColor: String!
+
+  """The input border radius brand style for the site"""
+  inputBorderRadius: String!
+
+  """The input error color brand style for the site"""
+  inputErrorColor: String!
+
+  """The input text color brand style for the site"""
+  inputTextColor: String!
+
+  """The primary background color brand style for the site"""
+  primaryBgColor: String!
+
+  """The primary font family brand style for the site"""
+  primaryFontFamily: String!
+
+  """The primary text color brand style for the site"""
+  primaryTextColor: String!
+
+  """The promotion badge background color global style for the site"""
+  promotionBadgeBgColor: String!
+
+  """The promotion badge text color global style for the site"""
+  promotionBadgeTextColor: String!
+
+  """The promotion text color global style for the site"""
+  promotionTextColor: String!
+
+  """The secondary background color brand style for the site"""
+  secondaryBgColor: String!
+
+  """The secondary CTA background color global style for the site"""
+  secondaryCtaBgColor: String!
+
+  """The secondary CTA text color global style for the site"""
+  secondaryCtaTextColor: String!
+
+  """The secondary font family brand style for the site"""
+  secondaryFontFamily: String!
+
+  """The secondary text color brand style for the site"""
+  secondaryTextColor: String!
+
+  """The subtitle font weight global style for the site"""
+  subtitleFontWeight: String!
+
+  """The surface border radius global style for the site"""
+  surfaceBorderRadius: String!
+
+  """The title font weight global style for the site"""
+  titleFontWeight: String!
+}
+
+"""Autogenerated input type of BulkAddUsersToGroups"""
+input BulkAddUsersToGroupsInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """Group IDs"""
+  groupIds: [ID!]!
+
+  """User IDs"""
+  userIds: [ID!]!
+}
+
+"""Autogenerated return type of BulkAddUsersToGroups."""
+type BulkAddUsersToGroupsPayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """Response message"""
+  message: String
+
+  """Errors on the input of a mutation"""
+  userErrors: [UserError!]
+}
+
+"""Autogenerated input type of BulkRemoveUsersFromGroups"""
+input BulkRemoveUsersFromGroupsInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """Group IDs"""
+  groupIds: [ID!]!
+
+  """User IDs"""
+  userIds: [ID!]!
+}
+
+"""Autogenerated return type of BulkRemoveUsersFromGroups."""
+type BulkRemoveUsersFromGroupsPayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """Response message"""
+  message: String
+
+  """Errors on the input of a mutation"""
+  userErrors: [UserError!]
+}
+
+"""Represents information about a Bundle"""
+type Bundle implements ProductItemInterface {
+  """The image of the item"""
+  cardImage: Image!
+
+  """Whether items in the Bundle must be completed in order"""
+  enforcedOrder: Boolean!
+
+  """The unique Bundle Id"""
+  id: ID!
+
+  """The image of the item"""
+  image: Image! @deprecated(reason: "Use card_image field instead")
+
+  """A list of product items that belong to the Bundle"""
+  items(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Possible filters for list of products"""
+    filter: BundleItemsFilterInput
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): ProductItemInterfaceConnection
+
+  """The number of product items in the bundle"""
+  itemsCount(
+    """Possible filters for list of products"""
+    filter: BundleItemsFilterInput
+  ): Int!
+
+  """The name of the Item"""
+  name: String!
+
+  """The product of the Bundle"""
+  product: Product!
+
+  """
+  The Program this bundle grants membership in. Null when unset, or when Programs are not enabled for the site.
+  """
+  programId: ID
+
+  """The unique slug used to construct the item's URL"""
+  slug: String!
+
+  """Whether the Bundle is used as a Membership"""
+  usedForMemberships: Boolean!
+
+  """Whether this Bundle is linked into a tiered membership."""
+  usedForTiered: Boolean!
+}
+
+"""The connection type for Bundle."""
+type BundleConnection {
+  """A list of edges."""
+  edges: [BundleEdge]
+
+  """A list of nodes."""
+  nodes: [Bundle]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type BundleEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: Bundle
+}
+
+"""Possible bundle filters"""
+input BundleFilter {
+  """Filter by whether items in the Bundle must be completed in order"""
+  enforcedOrder: Boolean
+
+  """
+  By default, all bundles are returned. If this filter is applied, only bundles
+  in which the current user is enrolled will be included in the result set.
+  """
+  enrolledBundlesOnly: Boolean
+
+  """
+  By default, all bundles are returned. This filter is used to return only bundles with published and visible product items
+  """
+  excludeEmptyBundles: Boolean
+
+  """Returns bundles by Id"""
+  id: [ID]
+
+  """
+  By default, all bundles are returned. If item is passed, bundles containing that item are returned
+  """
+  item: BundleItemFilter
+
+  """Filter bundles by name (case-insensitive, partial match)"""
+  name: String
+
+  """Filter by the publication status of the Bundle's product"""
+  publicationStatus: [ProductStatus!]
+
+  """Filter by whether the Bundle is used as a Membership"""
+  usedForMemberships: Boolean
+}
+
+"""Possible Bundle Item type values"""
+enum BundleItem {
+  """Fitler for courses"""
+  COURSE
+}
+
+"""Filter for bundle items"""
+input BundleItemFilter {
+  id: Int!
+  type: BundleItem!
+}
+
+"""Possible bundle items filters"""
+input BundleItemsFilterInput {
+  """
+  By default, all non-scorm course prodcuts are returned. If filter is applied,
+  prodcuts the current user is enrolled in will be excluded from the result set.
+  """
+  includeScormCourseProducts: Boolean
+}
+
+"""Role the buyer takes on for the resulting cart's purchase"""
+enum BuyerRole {
+  """
+  Buyer is treated as a seat manager for items with quantity > 1. Default.
+  """
+  AUTO
+
+  """
+  Buyer is treated as a seat manager for every item in the cart, regardless of quantity.
+  """
+  SEAT_MANAGER
+}
+
+"""
+A line item in the cart. Supply either `priceId` or `priceData`, not both.
+"""
+input CartItemInput {
+  """
+  Inline price definition. If `lookupKey` is set, an existing price with that
+  key is returned instead of creating a new one. Mutually exclusive with `priceId`.
+  """
+  priceData: ProductPriceCreateInput
+
+  """ID of an existing price. Mutually exclusive with `priceData`."""
+  priceId: ID
+
+  """
+  Required when supplying `priceData`. Ignored when supplying `priceId` (the product is derived from the price).
+  """
+  productId: ID
+
+  """Number of units. Defaults to 1."""
+  quantity: Int = 1
+}
+
+"""Represents information about a Category"""
+type Category {
+  """The date when the category was created"""
+  createdAt: DateTime!
+
+  """The Site's default Category"""
+  default: Boolean!
+
+  """A short learner-facing description of what the Category contains"""
+  description: String
+
+  """The unique Category Id"""
+  id: ID!
+
+  """URL of the Category image"""
+  imageUrl: String
+
+  """The name of the Category"""
+  name: String!
+
+  """
+  The position this Category appears relative to other Categories on the Site
+  """
+  position: Int!
+
+  """A list of the Category's Products"""
+  products(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Possible filters for the Category's list of products"""
+    filter: ProductFilter
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): ProductConnection
+
+  """The slug of the Category"""
+  slug: String!
+
+  """The date when the Category was updated"""
+  updatedAt: DateTime!
+}
+
+"""The connection type for Category."""
+type CategoryConnection {
+  """A list of edges."""
+  edges: [CategoryEdge]
+
+  """A list of nodes."""
+  nodes: [Category]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type CategoryEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: Category
+}
+
+"""Possible fields to order categories by"""
+input CategoryOrderByInput {
+  """The sort order direction for the list of categories"""
+  direction: OrderDirection!
+
+  """The sort order field for the list of categories"""
+  field: CategoryOrderFieldInput!
+}
+
+"""Possible fields to order categories"""
+enum CategoryOrderFieldInput {
+  """Order categories by name"""
+  NAME
+
+  """Order categories by position"""
+  POSITION
+}
+
+"""Represents a certificate record for a user"""
+type CertificateRecord {
+  """The unique identifier for this issued certificate"""
+  issuedId: ID!
+
+  """The course for which this certificate was issued"""
+  course: Course
+
+  """The credential ID for this certificate record"""
+  credentialId: String @deprecated(reason: "Use issued_id instead")
+
+  """The date the certificate expires"""
+  expiryDate: DateTime
+
+  """The certificate record ID"""
+  id: ID!
+
+  """The date and time the certificate was issued"""
+  issuedAt: DateTime
+
+  """The URL path used to download the certificate PDF"""
+  pdfDownloadPath: String!
+
+  """The user who received this certificate"""
+  user: User
+}
+
+"""The connection type for CertificateRecord."""
+type CertificateRecordConnection {
+  """A list of edges."""
+  edges: [CertificateRecordEdge]
+
+  """A list of nodes."""
+  nodes: [CertificateRecord]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total number of certificate records"""
+  totalCount: Int!
+}
+
+"""An edge in a connection."""
+type CertificateRecordEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: CertificateRecord
+}
+
+"""
+A certification sold as a product. The canonical record lives in student-certification.
+"""
+type CertificationProgram implements ProductItemInterface {
+  """The image of the item"""
+  cardImage: Image!
+
+  """The name of the Item"""
+  name: String!
+
+  """The unique slug used to construct the item's URL"""
+  slug: String!
+}
+
+"""An individual Chapter from a Course"""
+type Chapter {
+  """The unique Chapter Id"""
+  id: ID!
+
+  """The list of individual Lessons within the Chapter"""
+  lessons(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """
+    By default, draft lessons will not be included unless this argument is true
+    """
+    includeDraftLessons: Boolean
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): LessonConnection!
+
+  """The total number of lessons in the Chapter"""
+  lessonsCount(
+    """
+    By default, draft lessons will not be included unless this argument is true
+    """
+    includeDraftLessons: Boolean
+  ): Int!
+
+  """
+  The position this Chapter appears relative to other Chapters in the Course
+  """
+  position: Int!
+
+  """The title of the Chapter"""
+  title: String!
+}
+
+"""The connection type for Chapter."""
+type ChapterConnection {
+  """A list of edges."""
+  edges: [ChapterEdge]
+
+  """A list of nodes."""
+  nodes: [Chapter]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type ChapterEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: Chapter
+}
+
+"""Error codes for Community mutations"""
+enum CommunitiesErrorCode {
+  """Not able to add members to space. Please try again."""
+  ADD_SPACE_MEMBERS_ERROR
+
+  """Unable to load this file. Refresh to try again."""
+  ATTACHMENT_NOT_AVAILABLE
+
+  """Attachment not found"""
+  ATTACHMENT_NOT_FOUND
+
+  """We couldn't archive this community"""
+  COMMUNITY_ARCHIVE_ERROR
+
+  """Community could not be created"""
+  COMMUNITY_CREATION_ERROR
+
+  """We couldn't delete this community"""
+  COMMUNITY_DELETE_ERROR
+
+  """We couldn't find this community"""
+  COMMUNITY_NOT_FOUND
+
+  """You can't delete a community with sales. Archive it instead."""
+  COMMUNITY_PURCHASE_ACCESS_DELETE_FORBIDDEN
+
+  """We couldn't unarchive this community"""
+  COMMUNITY_UNARCHIVE_ERROR
+
+  """Community could not be updated"""
+  COMMUNITY_UPDATE_ERROR
+
+  """Unable to determine tenant plan features"""
+  FEATURE_LOOKUP_FAILED
+
+  """Mentioning everyone (@space) is not allowed on lesson discussions"""
+  LESSON_MENTIONS_NOT_ALLOWED
+
+  """This lesson could not be found for this space's connected course"""
+  LESSON_NOT_FOUND
+
+  """
+  Mention ids are formatted incorrectly. Please follow Base64 encoding (e.x. User-1234)
+  """
+  MENTION_FORMAT_ERROR
+
+  """Mention limit of 50 reached"""
+  MENTION_LIMIT_REACHED
+
+  """The requested operation is not allowed on your site plan."""
+  NOT_ALLOWED_ON_PLAN
+
+  """Could not create or update attachment"""
+  POST_ATTACHMENT_ERROR
+
+  """Post could not be created"""
+  POST_CREATION_ERROR
+
+  """Could not follow post or reply"""
+  POST_FOLLOW_ERROR
+
+  """Max depth of 2 reached for post replies"""
+  POST_MAX_DEPTH
+
+  """Could not moderate post"""
+  POST_MODERATION_ERROR
+
+  """Could not move post to the specified space"""
+  POST_MOVE_ERROR
+
+  """Post not found"""
+  POST_NOT_FOUND
+
+  """
+  Only scheduled posts that have not been published can be published or rescheduled
+  """
+  POST_NOT_SCHEDULED
+
+  """Could not pin post or reply"""
+  POST_PIN_ERROR
+
+  """Could not publish post"""
+  POST_PUBLISH_ERROR
+
+  """Could not react to post or reply"""
+  POST_REACTION_ERROR
+
+  """Could not reschedule post"""
+  POST_RESCHEDULE_ERROR
+
+  """Post rescheduling is not enabled for this site"""
+  POST_RESCHEDULING_NOT_AVAILABLE
+
+  """Post scheduling is not enabled for this site"""
+  POST_SCHEDULING_NOT_AVAILABLE
+
+  """You cannot post in this space. The space is read-only."""
+  POST_SPACE_READ_ONLY
+
+  """Could not unfollow post or reply"""
+  POST_UNFOLLOW_ERROR
+
+  """Could not unpin post or reply"""
+  POST_UNPIN_ERROR
+
+  """Could not edit post or reply"""
+  POST_UPDATE_ERROR
+
+  """Product not found"""
+  PRODUCT_NOT_FOUND
+
+  """
+  This product has already been added. Existing connection must be removed first
+  """
+  PRODUCT_RELATION_EXISTS
+
+  """Publish product first to establish relation"""
+  PRODUCT_RELATION_NOT_PUBLISHED
+
+  """Please choose a publish time, or publish this post now"""
+  PUBLISH_NOW_MUST_BE_TRUE
+
+  """
+  This related item has already been added. Existing item must be removed first
+  """
+  RELATED_ITEM_EXISTS
+
+  """Related item not found"""
+  RELATED_ITEM_NOT_FOUND
+
+  """Publish related item first to establish relation"""
+  RELATED_ITEM_NOT_PUBLISHED
+
+  """
+  Not able to remove members from space. They may have been previously removed. Please try again.
+  """
+  REMOVE_SPACE_MEMBERS_ERROR
+
+  """
+  Cannot change a reply's space. Please change the parent post's space instead
+  """
+  REPLY_SPACE_ERROR
+
+  """You cannot reply in this space. The space is read-only."""
+  REPLY_SPACE_READ_ONLY
+
+  """Please choose a time in the future"""
+  SCHEDULED_AT_IN_PAST
+
+  """Please choose a time within the next 4 months"""
+  SCHEDULED_AT_TOO_FAR
+
+  """Space could not be created"""
+  SPACE_CREATION_ERROR
+
+  """Cannot delete Space"""
+  SPACE_DELETE_ERROR
+
+  """Invalid Space"""
+  SPACE_INVALID
+
+  """Space name already taken"""
+  SPACE_NAME_ERROR
+
+  """Cannot re-order Space"""
+  SPACE_REORDER_ERROR
+
+  """Cannot update Space"""
+  SPACE_UPDATE_ERROR
+
+  """Unable to play video. Refresh to try again."""
+  VIDEO_NOT_AVAILABLE
+}
+
+"""Filters for the Site's communities list"""
+input CommunitiesFilterInput {
+  """When true, returns only archived communities (admins only)"""
+  archived: Boolean
+
+  """When true, return only communities the current user can moderate"""
+  canModerate: Boolean
+
+  """Restrict the result to communities with these IDs"""
+  ids: [ID!]
+
+  """Case-insensitive substring match against the community name"""
+  name: String
+}
+
+"""User error type"""
+type CommunitiesUserError {
+  """The error code"""
+  code: CommunitiesErrorCode
+
+  """Description of the error"""
+  message: String!
+
+  """Path to the input field that caused the error"""
+  path: [String!]
+}
+
+"""Community information"""
+type Community implements ProductItemInterface {
+  """
+  The default access type for a community. A null value indicates only admins have access.
+  """
+  accessType: AccessType
+
+  """Community image fields"""
+  cardImage: Image!
+
+  """The description"""
+  description: String
+
+  """The base font"""
+  font: String
+
+  """The unique Community ID"""
+  id: ID!
+
+  """Community image fields"""
+  image: Image! @deprecated(reason: "Use card_image field instead")
+
+  """A filterable list of the community's members"""
+  members(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Possible filters for community members"""
+    filter: CommunityUserFilterInput
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Member order by"""
+    orderBy: CommunityUserOrderByInput
+  ): CommunityUserConnection
+
+  """The name"""
+  name: String!
+
+  """A filterable list of the community's posts"""
+  posts(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Post filters"""
+    filter: PostFilterInput
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Posts order by"""
+    orderBy: PostOrderByInput
+  ): PostConnection
+
+  """The primary color"""
+  primaryColor: String
+
+  """The published state"""
+  published: Boolean
+
+  """Search the community's members by name or email"""
+  searchableMembers(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Member order by"""
+    orderBy: SearchableMemberOrderByInput
+
+    """Filter active members by specific search filters (defaults to all)"""
+    searchFilters: [SearchFilters!]
+
+    """User supplied string to search by"""
+    searchTerm: String
+
+    """Space to filter by"""
+    spaceId: ID
+  ): CommunityUserConnection
+
+  """A list of the community's spaces"""
+  spaces(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Space order by"""
+    orderBy: CommunitySpaceOrderByInput
+  ): SpaceConnection
+
+  """A list of the community's currently trending posts"""
+  trendingPosts(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): PostConnection
+
+  """The unique slug used to construct the item's URL"""
+  slug: String!
+}
+
+"""The connection type for Community."""
+type CommunityConnection {
+  """A list of edges."""
+  edges: [CommunityEdge]
+
+  """A list of nodes."""
+  nodes: [Community]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total number of communities"""
+  totalCount: Int!
+}
+
+"""An edge in a connection."""
+type CommunityEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: Community
+}
+
+"""Community ordering fields and direction"""
+input CommunityOrderByInput {
+  """Order direction"""
+  direction: OrderDirection = DESC
+
+  """Order field"""
+  field: CommunityOrderField!
+}
+
+"""Possible fields to order communities by"""
+enum CommunityOrderField {
+  """Order communities by created_at"""
+  CREATED_AT
+
+  """Order communities by member_count"""
+  MEMBER_COUNT
+
+  """Order communities by name"""
+  NAME
+
+  """Order communities by product_position"""
+  PRODUCT_POSITION
+}
+
+"""Community space access input fields"""
+input CommunitySpaceAccessInput {
+  accessType: SpaceAccessType!
+  accessValue: String!
+}
+
+"""Community space ordering fields and direction"""
+input CommunitySpaceOrderByInput {
+  direction: OrderDirection!
+  field: CommunitySpaceOrderField!
+}
+
+"""Community space OrderBy fields"""
+enum CommunitySpaceOrderField {
+  """Order community spaces by position"""
+  POSITION
+}
+
+"""Community member information"""
+type CommunityUser {
+  """Membership activated date"""
+  activatedAt: DateTime!
+
+  """The community details"""
+  community: Community!
+
+  """Membership expiry date"""
+  expiresAt: DateTime
+
+  """The unique member ID"""
+  id: ID!
+
+  """User information"""
+  user: User
+}
+
+"""The connection type for CommunityUser."""
+type CommunityUserConnection {
+  """A list of edges."""
+  edges: [CommunityUserEdge]
+
+  """A list of nodes."""
+  nodes: [CommunityUser]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total number of community members"""
+  totalCount: Int!
+}
+
+"""An edge in a connection."""
+type CommunityUserEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: CommunityUser
+}
+
+"""Community member filters"""
+input CommunityUserFilterInput {
+  """Filter by active members"""
+  active: Boolean
+
+  """Filter by user global ids"""
+  userGids: [ID!]
+}
+
+"""Community member ordering fields and direction"""
+input CommunityUserOrderByInput {
+  direction: OrderDirection!
+  field: CommunityUserOrderField!
+}
+
+"""Community member OrderBy fields"""
+enum CommunityUserOrderField {
+  """Order community members by activated_at"""
+  ACTIVATED_AT
+
+  """Order community members by expires_at"""
+  EXPIRES_AT
+}
+
+"""A common interface for Content types"""
+interface ContentInterface {
+  """Represents the type of the Content"""
+  contentType: ContentType!
+
+  """The date when the Content was created"""
+  createdAt: DateTime!
+
+  """The unique Content ID"""
+  id: ID!
+
+  """The date when the Content was updated"""
+  updatedAt: DateTime!
+}
+
+"""Possible types of Content"""
+enum ContentType {
+  """The assignment content type"""
+  ASSIGNMENT
+
+  """The audio content type"""
+  AUDIO
+
+  """The download content type"""
+  DOWNLOAD
+
+  """The exam content type"""
+  EXAM
+
+  """The live content type"""
+  LIVE
+
+  """The multimedia content type"""
+  MULTIMEDIA
+
+  """The pdf content type"""
+  PDF
+
+  """The presentation content type"""
+  PRESENTATION
+
+  """The quiz content type"""
+  QUIZ
+
+  """The survey content type"""
+  SURVEY
+
+  """The text content type"""
+  TEXT
+
+  """The video content type"""
+  VIDEO
+}
+
+"""Course entity"""
+type Course implements ProductItemInterface {
+  """The Course ID"""
+  id: ID!
+
+  """A list of the course's related items"""
+  relatedItems(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): RelatedItemUnionConnection
+
+  """
+  Whether the SCO iframe sandbox includes allow-downloads (null = default false)
+  """
+  allowDownloads: Boolean
+
+  """How this SCORM course is marked complete (null = default "completed")"""
+  completionCriterion: ScormCompletionCriterion
+
+  """
+  Minimum score (0-100) required when the completion criterion is score-based
+  """
+  completionMinScore: Float
+
+  """
+  Optional SCORM player header logo URL (null = use the site course-player logo)
+  """
+  customLogo: String
+
+  """
+  How this SCORM course launches for learners (null = default "standard")
+  """
+  launchStyle: ScormLaunchStyle
+
+  """SCORM player header logo height in px (null = default 64)"""
+  logoSize: Int
+
+  """A Scorm uploaded package"""
+  package: Package
+
+  """Whether the tenant header shows during playback (null = default true)"""
+  showTenantHeader: Boolean
+
+  """The course player theme settings"""
+  branding: CourseBranding
+
+  """The image of the item"""
+  cardImage: Image!
+
+  """A list of certificates issued for the course"""
+  certificates(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Filter by user ID"""
+    userId: ID
+  ): CertificateRecordConnection
+
+  """The curriculum defined by the Course"""
+  curriculum: CourseCurriculum!
+
+  """The description of the Course"""
+  description: String
+
+  """The instructor of the Course"""
+  instructor: Instructor
+
+  """The name of the Item"""
+  name: String!
+
+  """The product of the Course"""
+  product: Product!
+
+  """A list of course reviews"""
+  reviews(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): CourseReviewConnection!
+
+  """The course setting defined by the course"""
+  settings: CourseSettings
+
+  """The unique slug used to construct the item's URL"""
+  slug: String!
+
+  """The title of the Course"""
+  title: String!
+}
+
+"""Represents information about the Site's course player branding"""
+type CourseBranding {
+  """The border radius style (sharp, soft, round)"""
+  borderRadius: String
+
+  """The main color used in course player"""
+  color: HexColor
+
+  """The body/paragraph font that was used by course player"""
+  font: String
+
+  """The heading font that was used by course player"""
+  headerFont: String
+
+  """The logo image url"""
+  logo: URL
+
+  """
+  The navigation and header background color override for the learner hub (hex), or null when unset
+  """
+  navColor: String
+
+  """Whether the course player logo should be displayed"""
+  showLogo: Boolean!
+
+  """
+  Whether branding comes from a course override ('course') or tenant defaults ('tenant')
+  """
+  source: String!
+
+  """The theme mode of the course player"""
+  theme: Theme!
+}
+
+"""The connection type for Course."""
+type CourseConnection {
+  """A list of edges."""
+  edges: [CourseEdge]
+
+  """A list of nodes."""
+  nodes: [Course]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total number of user's courses"""
+  totalCount: Int!
+}
+
+"""
+Represents the curriculum of the Course and additional metadata such as lesson count
+"""
+type CourseCurriculum {
+  """The list of Chapters in the Course"""
+  chapters(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """
+    By default, chapters containing only draft lessons will not be included unless the argument is true
+    """
+    includeDraftLessons: Boolean
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): ChapterConnection!
+
+  """The total number of Chapters in the Course"""
+  chaptersCount(
+    """
+    By default, chapters containing only draft lessons will not be included unless the argument is true
+    """
+    includeDraftLessons: Boolean
+  ): Int!
+
+  """The total number of lessons in the Curriculum"""
+  lessonsCount(
+    """
+    By default, draft lessons will not be included unless the argument is true
+    """
+    includeDraftLessons: Boolean
+  ): Int!
+
+  """The total number of time (in hours) of video content in the Curriculum"""
+  totalVideoContentTime: Int!
+}
+
+"""An edge in a connection."""
+type CourseEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: Course
+}
+
+"""User progress data for a Course entitlement."""
+type CourseEntitlementData {
+  """
+  The date and time the enrollment was activated. Null while the enrollment is a
+  free trial; the grant time is the entitlement's createdAt
+  """
+  activatedAt: DateTime
+
+  """The date and time the user completed the course"""
+  completedAt: DateTime
+
+  """
+  The legacy REST enrollment ID, for mapping purposes only. Not usable as a mutation key
+  """
+  enrollmentId: ID
+
+  """
+  Course completion as a raw fraction between 0.0 and 1.0. Multiply by 100 for a percentage
+  """
+  percentageCompleted: Float
+
+  """The date and time the user started the course"""
+  startedAt: DateTime
+}
+
+"""Possible fields to filter courses"""
+input CourseFilter {
+  """Search by category id"""
+  categoryIds: [ID!]
+
+  """Filter by enrollment status"""
+  enrollment: EnrollmentStatus
+
+  """Filter by course format"""
+  format: [CourseFormat!]
+
+  """Search by course ids"""
+  ids: [ID!]
+
+  """
+  By default, all non-scorm course products are returned. If filter is applied,
+  products the current user is enrolled in will be excluded from the result set.
+  """
+  includeScormCourses: Boolean
+
+  """Filter by product archived status"""
+  isArchived: Boolean
+
+  """Search by course name"""
+  name: String
+
+  """Search by product status"""
+  productStatus: [ProductStatus!]
+}
+
+"""The course format or delivery method"""
+enum CourseFormat {
+  """The course is a Canvas Course"""
+  CANVAS
+
+  """The course is a Channels Course"""
+  CHANNELS
+
+  """The course is a Classic Course"""
+  CLASSIC
+
+  """The course is a SCORM Course"""
+  SCORM
+}
+
+"""Course review information"""
+type CourseReview {
+  """The text of the Course Review"""
+  comment: String
+
+  """The date when the Course Review was created"""
+  createdAt: DateTime!
+
+  """The unique Id for the Course Review"""
+  id: ID!
+
+  """The rating of the Course Review"""
+  rating: Int!
+
+  """The title of the Course Review"""
+  title: String
+}
+
+"""The connection type for CourseReview."""
+type CourseReviewConnection {
+  """A list of edges."""
+  edges: [CourseReviewEdge]
+
+  """A list of nodes."""
+  nodes: [CourseReview]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type CourseReviewEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: CourseReview
+}
+
+"""Represents the course settings"""
+type CourseSettings {
+  """
+  Whether or not students shall receive a message upon chapter completion
+  """
+  chapterCompletionMessageEnabled: Boolean!
+
+  """Custom course completion message in HTML format"""
+  courseCompletionCustomMessage: HTML
+
+  """Whether or not students shall receive a message upon course completion"""
+  courseCompletionMessageEnabled: Boolean!
+
+  """
+  Presentation lessons require learners to reach the last slide before the lesson can be marked complete
+  """
+  presentationCompletionRequired: Boolean!
+
+  """Whether or not students can send and read reviews about the course"""
+  studentReviewsEnabled: Boolean!
+
+  """Whether or not videos will be started automatically"""
+  videoAutoplayEnabled: Boolean!
+
+  """
+  Video lessons will be marked complete when a student reaches to this completion percentage
+  """
+  videoCompletionPercentage: Float
+
+  """Video lessons should be completed till a certain percentage"""
+  videoCompletionRequired: Boolean!
+}
+
+"""
+Defines the fields for creating a custom role, including name, description, and permissions.
+"""
+input CreateCustomRoleInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """An optional description of the role's purpose."""
+  description: String
+
+  """
+  The display name of the new role. A stable identifier is auto-generated from this.
+  """
+  name: String!
+
+  """
+  The permission keys to grant. Use permissionCatalog to browse available keys.
+  """
+  permissions: [String!]!
+}
+
+"""Returns the created custom role on success, or validation errors."""
+type CreateCustomRolePayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The newly created custom role."""
+  customRole: CustomRole
+
+  """Errors on the input of a mutation"""
+  userErrors: [UserError!]
+}
+
+"""Autogenerated input type of CreatePost"""
+input CreatePostInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The content of the post"""
+  content: String
+
+  """The space ID for this post"""
+  spaceId: ID!
+
+  """The title of the post"""
+  title: String!
+}
+
+"""Autogenerated return type of CreatePost."""
+type CreatePostPayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The created post"""
+  post: Post
+
+  """The list of errors that occurred from this mutation"""
+  userErrors: [CommunitiesUserError!]
+}
+
+"""
+Defines the fields for creating a team member and sending an invitation.
+"""
+input CreateTeamMemberInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """Deprecated. Use emailAddress instead."""
+  email: String @deprecated(reason: "Use emailAddress")
+
+  """
+  The new team member's email address. An invitation is sent to this address.
+  """
+  emailAddress: EmailAddress
+
+  """The new team member's first name."""
+  firstName: String!
+
+  """
+  Groups to assign the new team member to. Required when the caller's create:user Group scope is a subset.
+  """
+  groupIds: [ID!]
+
+  """The new team member's last name."""
+  lastName: String!
+}
+
+"""Returns the created team member on success, or validation errors."""
+type CreateTeamMemberPayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The newly created team member."""
+  teamMember: TeamMember
+
+  """Errors on the input of a mutation"""
+  userErrors: [UserError!]
+}
+
+"""A custom profile field for a user"""
+type CustomProfileField {
+  """The custom profile field id"""
+  id: String
+
+  """The custom profile field label"""
+  label: String
+
+  """Is the custom profile field required"""
+  required: Boolean
+
+  """The custom profile field type"""
+  type: String
+
+  """The custom profile field type id"""
+  typeId: String
+
+  """The custom profile field value"""
+  value: String
+}
+
+"""The connection type for CustomProfileField."""
+type CustomProfileFieldConnection {
+  """A list of edges."""
+  edges: [CustomProfileFieldEdge]
+
+  """A list of nodes."""
+  nodes: [CustomProfileField]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""
+Which custom profile field definitions to load. Checkout is signup and My Account; onboarding is the learner intake form.
+"""
+enum CustomProfileFieldContext {
+  """Fields collected at checkout and signup"""
+  CHECKOUT
+
+  """Fields collected on the learner intake form"""
+  ONBOARDING
+}
+
+"""An edge in a connection."""
+type CustomProfileFieldEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: CustomProfileField
+}
+
+"""Allowed custom profile field types for create/update inputs"""
+enum CustomProfileFieldType {
+  """Country selector"""
+  COUNTRY
+
+  """Multi-select (checkbox) options"""
+  MULTIPLE_CHOICE
+
+  """Single-select (radio) options"""
+  SINGLE_CHOICE
+
+  """Free-text response"""
+  TEXT
+}
+
+"""
+A custom role defined by a site admin, with a specific set of permissions.
+"""
+type CustomRole {
+  """The number of users currently assigned to this role."""
+  assignedUserCount: Int!
+
+  """When this role was created."""
+  createdAt: DateTime!
+
+  """An optional description of the role's purpose."""
+  description: String
+
+  """The unique ID of this role. Use this to reference it in mutations."""
+  id: ID!
+
+  """The display name of the role."""
+  name: String!
+
+  """The permission keys granted by this role."""
+  permissions: [String!]!
+
+  """
+  A stable identifier auto-generated from the name. Does not change after creation.
+  """
+  slug: String!
+
+  """When this role's name, description, or permissions were last changed."""
+  updatedAt: DateTime!
+}
+
+"""
+A record of a custom role assigned to a user, including when it was assigned.
+"""
+type CustomRoleAssignment {
+  """When this role was assigned to the user."""
+  createdAt: DateTime!
+
+  """The custom role that was assigned."""
+  customRole: CustomRole
+
+  """The unique ID of this role assignment."""
+  id: ID!
+}
+
+"""The connection type for CustomRole."""
+type CustomRoleConnection {
+  """A list of edges."""
+  edges: [CustomRoleEdge]
+
+  """A list of nodes."""
+  nodes: [CustomRole]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total number of custom roles"""
+  totalCount: Int!
+}
+
+"""A single custom role in a paginated list."""
+type CustomRoleEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: CustomRole
+}
+
+"""
+A specific resource a user's custom role is scoped to, such as a course or community.
+"""
+type CustomRoleResourceScope {
+  """
+  The display name of the scoped resource. Null if the resource has been deleted.
+  """
+  resourceName: String
+
+  """The ID of the scoped resource."""
+  resourceScopeId: ID!
+
+  """
+  The type of the scoped resource, such as COURSE, COMMUNITY, or SEAT_GROUP.
+  """
+  resourceScopeType: ResourceScopeType!
+}
+
+"""
+A team member assigned to a custom role, with their associated resource scopes.
+"""
+type CustomRoleUser {
+  """
+  Resource types this user can manage fully under this role, including resources
+  created later. Does not list individual resources; see resourceScopes for those.
+  """
+  allResourceTypes: [ResourceScopeType!]!
+
+  """When the user was assigned this role."""
+  assignedAt: DateTime!
+
+  """
+  The specific resources this user can manage under this role. Does not include types granted in full; see allResourceTypes.
+  """
+  resourceScopes: [CustomRoleResourceScope!]!
+
+  """The team member assigned to this role."""
+  user: User!
+}
+
+"""The connection type for CustomRoleUser."""
+type CustomRoleUserConnection {
+  """A list of edges."""
+  edges: [CustomRoleUserEdge]
+
+  """A list of nodes."""
+  nodes: [CustomRoleUser]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total number of users assigned to the role"""
+  totalCount: Int!
+}
+
+"""A single team member in a paginated custom role user list."""
+type CustomRoleUserEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: CustomRoleUser
+}
+
+"""Date as YYYY-MM-DD"""
+scalar Date
+
+"""An ISO 8601-encoded datetime"""
+scalar DateTime
+  @specifiedBy(url: "https://tools.ietf.org/html/rfc3339")
+
+"""A filter for searching within a date range."""
+input DateTimeFilter {
+  """Search from the specified datetime"""
+  from: DateTime
+
+  """Search to the specified datetime"""
+  to: DateTime
+}
+
+"""Filter by a date time range"""
+input DateTimeRangeInput {
+  """Filter by this time or before it"""
+  end: DateTime
+
+  """Filter by this time or after it"""
+  start: DateTime
+}
+
+"""
+Stable identifiers for built-in Thinkific roles available for assignment.
+"""
+enum DefaultRoleSlug {
+  """
+  Can manage community posts, LIVE events, and spaces for assigned communities.
+  """
+  COMMUNITY_MODERATOR
+
+  """Can manage assigned courses and instructors."""
+  COURSE_ADMIN
+
+  """Can view and export student progress for assigned groups."""
+  GROUP_ANALYST
+
+  """Has full access to the site, except billing and ownership transfer."""
+  SITE_ADMIN
+}
+
+"""
+Defines the fields for deleting a custom role, with optional member reassignment.
+"""
+input DeleteCustomRoleInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The ID of the custom role to delete."""
+  id: ID!
+
+  """
+  Optional. If provided, all current role members are reassigned to this role before deletion.
+  """
+  replacementRoleSlug: String
+
+  """
+  Resource scopes to apply when reassigning members to the replacement role. Ignored if no replacement role is provided.
+  """
+  resourceScopes: [ResourceScopeInput!]
+}
+
+"""
+Returns the deleted custom role and reassignment count on success, or validation errors.
+"""
+type DeleteCustomRolePayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The deleted custom role."""
+  customRole: CustomRole
+
+  """
+  The number of members reassigned to the replacement role before deletion.
+  """
+  reassignedCount: Int
+
+  """Errors on the input of a mutation"""
+  userErrors: [UserError!]
+}
+
+"""Defines the fields for permanently deleting a team member."""
+input DeleteUserInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The GID of the team member to delete."""
+  userGid: ID
+}
+
+"""
+Returns the deleted team member identifier on success, or validation errors.
+"""
+type DeleteUserPayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The GID of the deleted team member, for client cache eviction"""
+  deletedUserGid: ID
+
+  """Errors on the input of a mutation"""
+  userErrors: [UserError!]
+}
+
+"""Represent information about a digital download"""
+type DigitalDownload implements ProductItemInterface {
+  """The image of the item"""
+  cardImage: Image!
+
+  """The digital download file"""
+  downloadFile: DownloadFile
+
+  """The Digital Download Id"""
+  id: ID!
+
+  """The name of the Item"""
+  name: String!
+
+  """The resource type"""
+  resourceType: ResourceType
+
+  """The unique slug used to construct the item's URL"""
+  slug: String!
+}
+
+"""Represents a Download Content"""
+type DownloadContent implements ContentInterface {
+  """Represents the type of the Content"""
+  contentType: ContentType!
+
+  """The date when the Content was created"""
+  createdAt: DateTime!
+
+  """The list of downloadable files"""
+  downloads(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): DownloadFileConnection
+
+  """The description of the downloadable files in HTML format"""
+  htmlDescription: HTML
+
+  """The unique Content ID"""
+  id: ID!
+
+  """The date when the Content was updated"""
+  updatedAt: DateTime!
+}
+
+"""Represents a Download file"""
+type DownloadFile implements FileInterface {
+  """Download file ID"""
+  id: ID!
+
+  """The name of the file"""
+  name: String
+
+  """The size of the file in bytes"""
+  rawSize: Int
+
+  """The human readable file size - e.g. 320 KB"""
+  size: String
+
+  """The file type - e.g. image/png"""
+  type: MIME
+
+  """The URL address used to download the file"""
+  url: URL
+}
+
+"""The connection type for DownloadFile."""
+type DownloadFileConnection {
+  """A list of edges."""
+  edges: [DownloadFileEdge]
+
+  """A list of nodes."""
+  nodes: [DownloadFile]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type DownloadFileEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: DownloadFile
+}
+
+"""A valid email address"""
+scalar EmailAddress
+
+"""Possible enrollment status type values"""
+enum EnrollmentStatus {
+  """Student has access to the course"""
+  ACTIVE
+
+  """Student access to the course has expired"""
+  EXPIRED
+
+  """Student has access to the free trial version of this course"""
+  FREE_TRIAL
+}
+
+"""Represents a user's access to a specific product within the platform"""
+type Entitlement {
+  """The date and time when this entitlement was created"""
+  createdAt: DateTime!
+
+  """
+  The date and time when this entitlement expires. If null, the entitlement does not expire
+  """
+  expiryDate: DateTime
+
+  """The unique identifier for this entitlement"""
+  id: ID!
+
+  """Whether the user has an active subscription for this entitlement"""
+  isSubscriptionActive: Boolean!
+
+  """
+  The item associated with this entitlement, containing detailed item information
+  """
+  item: EntitlementItemUnion!
+
+  """
+  Item-type-specific data for this entitlement. Null when the item type has no associated data
+  """
+  itemData: EntitlementItemData
+
+  """The type of product the user has access to"""
+  itemType: Item!
+
+  """Whether the user has limited access to the product"""
+  limitedAccess: Boolean!
+
+  """The status of the user's entitlement (ACTIVE or EXPIRED or FREE_TRIAL)"""
+  status: EntitlementStatus!
+
+  """The user who holds this entitlement"""
+  user: User!
+}
+
+"""The connection type for Entitlement."""
+type EntitlementConnection {
+  """A list of edges."""
+  edges: [EntitlementEdge]
+
+  """A list of nodes."""
+  nodes: [Entitlement]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type EntitlementEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: Entitlement
+}
+
+"""Filter options for querying a user's entitlements"""
+input EntitlementFilterInput {
+  """Filter by entitlements created within a range"""
+  createdAt: DateTimeRangeInput
+
+  """
+  Filter by entitlements expiring within a range. Entitlements that never expire are excluded
+  """
+  expiryDate: DateTimeRangeInput
+
+  """Filter by specific item IDs"""
+  itemIds: [ID!]
+
+  """
+  Filter by specific item types (e.g., COURSE, DIGITAL_DOWNLOAD, COMMUNITY)
+  """
+  itemType: [Item!]
+
+  """Filter by the current status of the user's access"""
+  status: EntitlementStatus
+}
+
+"""Item-type-specific data associated with an entitlement"""
+union EntitlementItemData = CourseEntitlementData
+
+"""
+Union of all possible item types that can be associated with an entitlement
+"""
+union EntitlementItemUnion = Product | Space
+
+"""Represents the status of a user's access to a product"""
+enum EntitlementStatus {
+  """
+  The user's access to a product is currently valid, has not expired and is not a free trial
+  """
+  ACTIVE
+
+  """The user's access to a product has expired and is no longer valid"""
+  EXPIRED
+
+  """
+  The user's access to a product is currently valid but is on a free trial
+  """
+  FREE_TRIAL
+}
+
+"""Represents an Exam Content"""
+type ExamContent implements ContentInterface {
+  """Represents the type of the Content"""
+  contentType: ContentType!
+
+  """The date when the Content was created"""
+  createdAt: DateTime!
+
+  """The unique Content ID"""
+  id: ID!
+
+  """The date when the Content was updated"""
+  updatedAt: DateTime!
+}
+
+"""Possible feature type values"""
+enum FeatureType {
+  """Bulk enrollment"""
+  BULK_ENROLLMENT
+
+  """Product bundles"""
+  BUNDLES
+
+  """Communities"""
+  COMMUNITIES
+
+  """Community events"""
+  COMMUNITY_EVENTS
+
+  """Community event notifications"""
+  COMMUNITY_EVENTS_NOTIFICATIONS
+
+  """Coupons & Promotions"""
+  COUPONS
+
+  """Courses"""
+  COURSES
+
+  """Course admins"""
+  COURSE_ADMINS
+
+  """Custom Colors"""
+  CUSTOM_COLORS
+
+  """Custom Fonts"""
+  CUSTOM_FONTS
+
+  """Custom Navigation Pages"""
+  CUSTOM_NAVIGATION_PAGES @deprecated(reason: "Custom navigation pages are now available to all site plans as part of the learner hub.")
+
+  """Custom roles"""
+  CUSTOM_ROLES
+
+  """Custom Widgets"""
+  CUSTOM_WIDGETS
+
+  """Digital downloads"""
+  DIGITAL_DOWNLOADS
+
+  """Direct messaging"""
+  DIRECT_MESSAGING
+
+  """Email automation"""
+  EMAIL_AUTOMATION
+
+  """Embedded Analytics"""
+  EMBEDDED_ANALYTICS
+
+  """Embedded Analytics Plus"""
+  EMBEDDED_ANALYTICS_PLUS
+
+  """Embedded Analytics Revenue"""
+  EMBEDDED_ANALYTICS_REVENUE
+
+  """Exam"""
+  EXAM
+
+  """Funnels"""
+  FUNNELS
+
+  """Groups"""
+  GROUPS
+
+  """Group analysts"""
+  GROUP_ANALYSTS
+
+  """Group based learning"""
+  GROUP_BASED_LEARNING
+
+  """Group Catalog"""
+  GROUP_CUSTOM_CATALOG
+
+  """Group orders"""
+  GROUP_ORDERS
+
+  """Group orders add enroll users"""
+  GROUP_ORDERS_ADD_ENROLL_USERS
+
+  """Group orders create seat managers"""
+  GROUP_ORDERS_CREATE_SEAT_MANAGERS
+
+  """Group orders reuse seats"""
+  GROUP_ORDERS_REUSE_SEATS
+
+  """Invoices"""
+  INVOICES
+
+  """Learning Paths"""
+  LEARNING_PATHS
+
+  """Live events"""
+  LIVE_EVENTS
+
+  """Marketing Analytics"""
+  MARKETING_ANALYTICS
+
+  """Multimedia upload"""
+  MULTIMEDIA_UPLOAD
+
+  """Onboarding Form"""
+  ONBOARDING_FORM
+
+  """Order bumps"""
+  ORDER_BUMPS
+
+  """Prerequisite lessons"""
+  PREREQUISITE_LESSONS
+
+  """Product payees"""
+  PRODUCT_PAYEES
+
+  """Quiz question bank"""
+  QUIZ_QUESTION_BANK
+
+  """Resource Library"""
+  RESOURCE_LIBRARY
+
+  """SCORM lessons"""
+  SCORM
+
+  """Seat Limits"""
+  SEAT_LIMITS
+
+  """Site admins"""
+  SITE_ADMINS
+
+  """Thinkific Certification"""
+  STUDENT_CERTIFICATION
+
+  """Team member licenses"""
+  TEAM_MEMBER_LICENSES
+
+  """Thinker"""
+  THINKER
+
+  """User Attributes"""
+  USER_ATTRIBUTES
+
+  """Bulk email"""
+  USER_BULK_EMAIL
+
+  """White labelling"""
+  WHITE_LABELLING
+}
+
+"""A common interface for file types"""
+interface FileInterface {
+  """The name of the file"""
+  name: String
+
+  """The size of the file in bytes"""
+  rawSize: Int
+
+  """The human readable file size - e.g. 320 KB"""
+  size: String
+
+  """The file type - e.g. image/png"""
+  type: MIME
+
+  """The URL address used to download the file"""
+  url: URL
+}
+
+"""Follower information"""
+type Follower {
+  """The post/reply follow ID"""
+  id: ID!
+
+  """The user who is following the post"""
+  user: User
+}
+
+"""The connection type for Follower."""
+type FollowerConnection {
+  """A list of edges."""
+  edges: [FollowerEdge]
+
+  """A list of nodes."""
+  nodes: [Follower]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type FollowerEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: Follower
+}
+
+"""Autogenerated input type of FollowPost"""
+input FollowPostInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The ID of the post the user will follow"""
+  postId: ID!
+}
+
+"""Autogenerated return type of FollowPost."""
+type FollowPostPayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The post"""
+  post: Post
+
+  """The list of errors that occurred from this mutation"""
+  userErrors: [CommunitiesUserError!]
+}
+
+"""Funnel"""
+type Funnel {
+  """The unique Funnel Id"""
+  id: ID!
+}
+
+"""Autogenerated input type of GenerateCartUrl"""
+input GenerateCartUrlInput {
+  """
+  Role the buyer takes on for the resulting cart's purchase. Defaults to AUTO (seat manager for items with quantity > 1).
+  """
+  buyerRole: BuyerRole = AUTO
+
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """
+  Optional tenant-supplied identifier preserved through the cart lifecycle.
+  Surfaces on the `order.created` and `order_transaction.succeeded` webhook
+  payloads so the resulting order can be correlated with your own system.
+  """
+  clientReferenceId: String
+
+  """
+  Optional coupon code to pre-apply to the cart. Applied best-effort when the
+  buyer opens the returned URL; a code that is invalid or does not apply to the
+  cart is silently ignored.
+  """
+  couponCode: String
+
+  """
+  Items to include in the cart. Each item must supply either `priceId` or `priceData`, not both.
+  """
+  items: [CartItemInput!]!
+
+  """
+  The location where the service is delivered or the event takes place. Used to
+  determine the applicable tax jurisdiction at checkout.
+  """
+  taxLocation: PhysicalAddressInput
+}
+
+"""Autogenerated return type of GenerateCartUrl."""
+type GenerateCartUrlPayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """
+  Absolute URL to the pre-filled checkout cart, ready to use as a redirect target.
+  """
+  url: String
+
+  """Errors on the input of a mutation"""
+  userErrors: [UserError!]
+}
+
+"""Represents information about a Group"""
+type Group {
+  """The group ID"""
+  id: ID!
+
+  """The date when the Group was created"""
+  createdAt: DateTime!
+
+  """The name of the Group"""
+  name: String!
+
+  """A paginated list of the group's Users"""
+  users(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): UserConnection
+}
+
+"""The connection type for Group."""
+type GroupConnection {
+  """A list of edges."""
+  edges: [GroupEdge]
+
+  """A list of nodes."""
+  nodes: [Group]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total number of groups in the connection, ignoring pagination"""
+  totalCount: Int!
+}
+
+"""An edge in a connection."""
+type GroupEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: Group
+}
+
+"""Possible fields to filter groups"""
+input GroupFilterInput {
+  """
+  When true, only groups with linked products are returned. When false, only groups without linked products.
+  """
+  hasProducts: Boolean
+
+  """
+  Filter to groups with these ids. Used to hydrate selected groups that are not on the first catalog page.
+  """
+  ids: [ID!]
+
+  """
+  Filter to groups whose name contains this value (case-insensitive, partial match).
+  """
+  name: String
+}
+
+"""Ordering options for groups"""
+input GroupOrderByInput {
+  """Sort direction"""
+  direction: OrderDirection
+
+  """Field to sort on"""
+  field: GroupOrderField!
+}
+
+"""Possible fields to order groups"""
+enum GroupOrderField {
+  """Order groups by creation date"""
+  CREATED_AT
+
+  """
+  Order groups by whether they have linked products. Use DESC to list groups with linked products first.
+  """
+  HAS_PRODUCTS
+
+  """Order groups by name"""
+  NAME
+}
+
+"""Permission keys that may narrow site.groups to the actor's GroupScope"""
+enum GroupPermission {
+  """Scope groups to those the actor may add users into"""
+  ASSIGN_GROUP_MEMBERS
+
+  """Scope groups to those whose members the actor may edit"""
+  EDIT_USER
+
+  """Scope groups to those the actor may assign during users import"""
+  IMPORT_USER
+
+  """Scope groups to those the actor may remove users from"""
+  REMOVE_GROUP_MEMBERS
+
+  """Scope groups to those whose members the actor may view"""
+  VIEW_USER
+}
+
+"""A valid color code, transported as a string"""
+scalar HexColor
+
+"""Represents valid HTML"""
+scalar HTML
+
+"""Represents a valid HTML5 markup"""
+scalar HTMLDocument
+
+"""Represents an image resource"""
+type Image {
+  """The image alt text"""
+  altText: String
+
+  """The location of the image as a URL"""
+  url: URL!
+}
+
+"""Community image input"""
+input ImageInput {
+  altText: String
+  url: URL!
+}
+
+"""Information about the Course Instructor"""
+type Instructor {
+  """The bio of the instructor"""
+  bio: String
+
+  """True when the instructor has no associated courses and can be deleted"""
+  canDelete: Boolean!
+
+  """The date when the instructor was created"""
+  createdAt: DateTime!
+
+  """The email address of the instructor"""
+  email: String
+
+  """The first name of the instructor"""
+  firstName: String
+
+  """The full name of the instructor"""
+  fullName: String
+
+  """The unique Id of the instructor"""
+  id: ID!
+
+  """The numeric Id of the instructor"""
+  instructorId: Int
+
+  """The last name of the instructor"""
+  lastName: String
+
+  """The title of the instructor"""
+  title: String
+
+  """The date when the instructor was updated"""
+  updatedAt: DateTime!
+}
+
+"""Current user interactions"""
+type Interactions {
+  """Whether the current user is following the post"""
+  following: Boolean!
+
+  """Whether the current user has reacted to the post"""
+  reacted(
+    """Filter by reaction type (defaults to "like")"""
+    reactionType: ReactionType
+  ): Boolean!
+}
+
+"""The interval values for a subscription plan"""
+enum Interval {
+  """Year interval"""
+  ANNUAL
+
+  """Month interval"""
+  MONTH
+}
+
+"""The item type values for entitlements"""
+enum Item {
+  """The item is a bundle"""
+  BUNDLE
+
+  """The item is a community"""
+  COMMUNITY
+
+  """The item is a community space"""
+  COMMUNITY_SPACE
+
+  """The item is a course"""
+  COURSE
+
+  """The item is a digital download"""
+  DIGITAL_DOWNLOAD
+
+  """The item is a live event"""
+  LIVE_EVENT
+
+  """The item is a Thinker"""
+  THINKER
+}
+
+"""Representation of an individual Lesson within a Chapter"""
+type Lesson {
+  """The Chapter the Lesson belongs to"""
+  chapter: Chapter
+
+  """
+  The content of the Lesson. If the content is locked and the user is a student, content will be null
+  """
+  content: ContentInterface
+
+  """The Course the Lesson belongs to"""
+  course: Course
+
+  """The draft status of the Lesson"""
+  draft: Boolean!
+
+  """The unique Lesson Id"""
+  id: ID!
+
+  """Represents the type of the Lesson"""
+  lessonType: ContentType
+
+  """The lock status of the Lesson"""
+  lockStatus: LessonLockStatus
+
+  """Represents individual settings specific to the Lesson"""
+  settings: LessonSettings
+
+  """The url where you can access the course on the web"""
+  takeUrl: URL
+
+  """The title of the Lesson"""
+  title: String!
+}
+
+"""The connection type for Lesson."""
+type LessonConnection {
+  """A list of edges."""
+  edges: [LessonEdge]
+
+  """A list of nodes."""
+  nodes: [Lesson]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type LessonEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: Lesson
+}
+
+"""Possible reasons for a lesson having a locked status"""
+enum LessonLockReason {
+  """Lesson is part of a drip schedule and is unreleased"""
+  DRIP_SCHEDULE
+
+  """
+  Lesson is not included in the free preview and requires full enrollment
+  """
+  FREE_PREVIEW_ONLY
+
+  """
+  There is an incomplete prequisite lesson that must be completed before accessing this lesson
+  """
+  PREREQUISITE
+}
+
+"""
+Represents whether or not a lesson is locked. A lesson is considered locked if
+it is either blocked by prerequisite or is part of a drip schedule and is unreleased
+"""
+type LessonLockStatus {
+  """If true, the lesson can not be accessed yet"""
+  locked: Boolean!
+
+  """The reason the lesson is locked"""
+  lockedReason: LessonLockReason
+
+  """The time at which the lesson will become available"""
+  releaseDate: DateTime
+}
+
+"""Represents individual settings on a Lesson such as its icon and label"""
+type LessonSettings {
+  """Whether the lesson is hidden from learners"""
+  draft: Boolean!
+
+  """Whether or not the Lesson is part of a free preview enrollment"""
+  free: Boolean!
+
+  """The specified Icon name for the Lesson"""
+  icon: String!
+
+  """The specified Label for the Lesson"""
+  label: String!
+
+  """
+  Whether the Lesson is a prerequisite. Students will be required to complete
+  any Lesson marked as prerequisite before they can access the next Chapter
+  """
+  prerequisite: Boolean!
+}
+
+"""How many seats remain for a cart line item"""
+type LineItemSeatAvailability {
+  """Whether the scarcest capped course is almost full"""
+  almostFull: Boolean!
+
+  """Whether the buyer can contact the creator when sold out"""
+  contactEnabled: Boolean!
+
+  """Whether the line item quantity is above the seats remaining"""
+  exceedsRemaining: Boolean!
+
+  """Whether any course in this line item has a seat cap"""
+  limited: Boolean!
+
+  """
+  Seats left on the scarcest capped course. Null when the line item is unlimited
+  """
+  remaining: Int
+
+  """Whether checkout should show how many seats remain"""
+  showRemainingAtCheckout: Boolean!
+
+  """Whether a capped course in this line item has no seats left"""
+  soldOut: Boolean!
+}
+
+"""A string of Liquid markup"""
+scalar Liquid
+
+"""Represents a Live Content"""
+type LiveContent implements ContentInterface {
+  """Represents the type of the Content"""
+  contentType: ContentType!
+
+  """The date when the Content was created"""
+  createdAt: DateTime!
+
+  """The unique Content ID"""
+  id: ID!
+
+  """The date when the Content was updated"""
+  updatedAt: DateTime!
+}
+
+"""Event information"""
+type LiveEvent implements ProductItemInterface {
+  """Event image fields"""
+  cardImage: Image!
+
+  """The name of the Item"""
+  name: String!
+
+  """The unique slug used to construct the item's URL"""
+  slug: String!
+}
+
+"""Error codes for the mark lesson incomplete mutation"""
+enum MarkLessonIncompleteErrorCode {
+  """Lesson is already marked as incomplete"""
+  ALREADY_INCOMPLETE
+
+  """Lesson type is blocked from being marked as incomplete"""
+  INVALID_TYPE_FOR_INCOMPLETION
+
+  """
+  Lesson is either blocked by prerequisite or is part of a drip schedule and is unreleased
+  """
+  NOT_AVAILABLE
+
+  """User is not enrolled in the course containing this lesson"""
+  NOT_ENROLLED
+
+  """Lesson not found"""
+  NOT_FOUND
+
+  """Lesson could not be marked as incomplete, please try again"""
+  UNABLE_TO_INCOMPLETE
+}
+
+"""Autogenerated input type of MarkLessonIncomplete"""
+input MarkLessonIncompleteInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The ID of the lesson"""
+  lessonId: ID!
+}
+
+"""Autogenerated return type of MarkLessonIncomplete."""
+type MarkLessonIncompletePayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The course containing the lesson"""
+  course: Course
+
+  """The lesson"""
+  lesson: Lesson
+
+  """The list of errors that occurred from this mutation"""
+  userErrors: [MarkLessonIncompleteUserError!]
+}
+
+"""MarkLessonIncomplete mutation input error"""
+type MarkLessonIncompleteUserError {
+  """The error code"""
+  code: MarkLessonIncompleteErrorCode
+
+  """Description of the error"""
+  message: String!
+
+  """Path to the input field that caused the error"""
+  path: [String!]
+}
+
+"""Attachment point for media on a question or answer choice"""
+enum MediaSlot {
+  """
+  Media attached to the answer explanation, revealed only when the explanation itself is
+  """
+  EXPLANATION
+
+  """Media attached beside the question or choice text"""
+  PROMPT
+}
+
+"""Represents a valid MIME file"""
+scalar MIME
+
+"""Autogenerated input type of MovePostToSpace"""
+input MovePostToSpaceInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The ID of the post"""
+  id: ID!
+
+  """The space ID for this post (post only)"""
+  spaceId: ID!
+}
+
+"""Autogenerated return type of MovePostToSpace."""
+type MovePostToSpacePayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The updated post"""
+  post: Post
+
+  """The list of errors that occurred from this mutation"""
+  userErrors: [CommunitiesUserError!]
+}
+
+"""Represents a Multimedia Content"""
+type MultimediaContent implements ContentInterface {
+  """Represents the type of the Content"""
+  contentType: ContentType!
+
+  """The date when the Content was created"""
+  createdAt: DateTime!
+
+  """The unique Content ID"""
+  id: ID!
+
+  """The date when the Content was updated"""
+  updatedAt: DateTime!
+
+  """
+  The URL address for the multimedia link. Dynamic variables are not replaced.
+  Dynamic variables available are: {{first_name}}, {{email}}, {{last_name}},
+  {{date_created}}
+  """
+  url: URL
+}
+
+"""Mutation root for the App schema"""
+type Mutation {
+  """Create a post"""
+  createPost(
+    """Parameters for CreatePost"""
+    input: CreatePostInput!
+  ): CreatePostPayload
+
+  """Follow a post or reply"""
+  followPost(
+    """Parameters for FollowPost"""
+    input: FollowPostInput!
+  ): FollowPostPayload
+
+  """Move a post to a space"""
+  movePost(
+    """Parameters for MovePostToSpace"""
+    input: MovePostToSpaceInput!
+  ): MovePostToSpacePayload
+
+  """Pin a post"""
+  pinPost(
+    """Parameters for PinPost"""
+    input: PinPostInput!
+  ): PinPostPayload
+
+  """React to a Post"""
+  reactToPost(
+    """Parameters for ReactToPost"""
+    input: ReactToPostInput!
+  ): ReactToPostPayload
+
+  """Create a reply to a post"""
+  replyToPost(
+    """Parameters for ReplyToPost"""
+    input: ReplyToPostInput!
+  ): ReplyToPostPayload
+
+  """Unfollow a post"""
+  unfollowPost(
+    """Parameters for UnfollowPost"""
+    input: UnfollowPostInput!
+  ): UnfollowPostPayload
+
+  """Unpin a post"""
+  unpinPost(
+    """Parameters for UnpinPost"""
+    input: UnpinPostInput!
+  ): UnpinPostPayload
+
+  """Update a post or reply"""
+  updatePost(
+    """Parameters for UpdatePost"""
+    input: UpdatePostInput!
+  ): UpdatePostPayload
+
+  """
+  Assigns a custom role to a user, with optional resource scoping. Returns the role assignment.
+  """
+  assignCustomRole(
+    """Parameters for AssignCustomRole"""
+    input: AssignCustomRoleInput!
+  ): AssignCustomRolePayload
+
+  """
+  Adds resource scopes to an existing custom role assignment, expanding which
+  resources the member can manage. Returns the updated assignment.
+  """
+  assignCustomRoleResourceScopes(
+    """Parameters for AssignCustomRoleResourceScopes"""
+    input: AssignCustomRoleResourceScopesInput!
+  ): AssignCustomRoleResourceScopesPayload
+
+  """
+  Assigns one or more built-in roles to a team member, with optional resource scoping. Returns the updated team member.
+  """
+  assignDefaultRoles(
+    """Parameters for AssignDefaultRoles"""
+    input: AssignDefaultRolesInput!
+  ): AssignDefaultRolesPayload
+
+  """Bulk add users to groups"""
+  bulkAddUsersToGroups(
+    """Parameters for BulkAddUsersToGroups"""
+    input: BulkAddUsersToGroupsInput!
+  ): BulkAddUsersToGroupsPayload
+
+  """Bulk remove users from groups"""
+  bulkRemoveUsersFromGroups(
+    """Parameters for BulkRemoveUsersFromGroups"""
+    input: BulkRemoveUsersFromGroupsInput!
+  ): BulkRemoveUsersFromGroupsPayload
+
+  """
+  Creates a new custom role with the specified name, description, and permissions. Returns the created role.
+  """
+  createCustomRole(
+    """Parameters for CreateCustomRole"""
+    input: CreateCustomRoleInput!
+  ): CreateCustomRolePayload
+
+  """Creates a new team member who can then be assigned roles."""
+  createTeamMember(
+    """Parameters for CreateTeamMember"""
+    input: CreateTeamMemberInput!
+  ): CreateTeamMemberPayload
+
+  """
+  Deletes a custom role. If a replacement role is provided, reassigns all
+  current members before deletion. Returns the deleted role and reassignment count.
+  """
+  deleteCustomRole(
+    """Parameters for DeleteCustomRole"""
+    input: DeleteCustomRoleInput!
+  ): DeleteCustomRolePayload
+
+  """Permanently deletes a team member. Site owners cannot be deleted."""
+  deleteUser(
+    """Parameters for DeleteUser"""
+    input: DeleteUserInput!
+  ): DeleteUserPayload
+
+  """
+  Resolves prices for the requested items and returns a checkout cart URL. Each
+  item must reference an existing price via `priceId` or describe one inline via
+  `priceData`. Use `lookupKey` inside `priceData` to make price creation
+  idempotent — the same key always resolves to the same price, so you do not
+  need to store Thinkific price IDs on your end.
+  """
+  generateCartUrl(
+    """Parameters for GenerateCartUrl"""
+    input: GenerateCartUrlInput!
+  ): GenerateCartUrlPayload
+
+  """
+  Marks a lesson as incomplete, if it is currently available to the user. If the
+  lesson is blocked by a prerequisite or if the lesson is part of a drip
+  schedule and it has not yet been released, the lesson cannot be marked as incomplete.
+  """
+  markLessonIncomplete(
+    """Parameters for MarkLessonIncomplete"""
+    input: MarkLessonIncompleteInput!
+  ): MarkLessonIncompletePayload
+
+  """
+  Removes all role assignments from a team member, revoking their admin access. Returns the updated team member.
+  """
+  removeAllRoles(
+    """Parameters for RemoveAllRoles"""
+    input: RemoveAllRolesInput!
+  ): RemoveAllRolesPayload
+
+  """
+  Replaces a user's current role with a new one. Supports switching between
+  default and custom roles in any direction. Returns the updated team member.
+  """
+  switchRole(
+    """Parameters for SwitchRole"""
+    input: SwitchRoleInput!
+  ): SwitchRolePayload
+
+  """
+  Removes a custom role from a user. Returns the removed role assignment.
+  """
+  unassignCustomRole(
+    """Parameters for UnassignCustomRole"""
+    input: UnassignCustomRoleInput!
+  ): UnassignCustomRolePayload
+
+  """
+  Removes resource scopes from an existing custom role assignment, restricting
+  which resources the member can manage. Returns the updated assignment.
+  """
+  unassignCustomRoleResourceScopes(
+    """Parameters for UnassignCustomRoleResourceScopes"""
+    input: UnassignCustomRoleResourceScopesInput!
+  ): UnassignCustomRoleResourceScopesPayload
+
+  """
+  Removes a built-in role from a team member. Returns the updated team member.
+  """
+  unassignDefaultRole(
+    """Parameters for UnassignDefaultRole"""
+    input: UnassignDefaultRoleInput!
+  ): UnassignDefaultRolePayload
+
+  """
+  Updates the submission's status and send an optional message to the student
+  """
+  updateAssignmentSubmissionStatus(
+    """Parameters for UpdateAssignmentSubmissionStatus"""
+    input: UpdateAssignmentSubmissionStatusInput!
+  ): UpdateAssignmentSubmissionStatusPayload
+
+  """
+  Updates a custom role's name, description, or permissions. Replaces the existing permission set. Returns the updated role.
+  """
+  updateCustomRole(
+    """Parameters for UpdateCustomRole"""
+    input: UpdateCustomRoleInput!
+  ): UpdateCustomRolePayload
+
+  """Update product's attributes"""
+  updateProduct(
+    """Parameters for UpdateProduct"""
+    input: UpdateProductInput!
+  ): UpdateProductPayload
+
+  """
+  Updates a team member's profile details (first name, last name, email). Returns the updated team member.
+  """
+  updateTeamMember(
+    """Parameters for UpdateTeamMember"""
+    input: UpdateTeamMemberInput!
+  ): UpdateTeamMemberPayload
+
+  """Updates the time when user views a lesson"""
+  viewLesson(
+    """Parameters for ViewLesson"""
+    input: ViewLessonInput!
+  ): ViewLessonPayload
+}
+
+"""Scalar representing a non-empty string."""
+scalar NonEmptyString
+
+"""
+Represents non-fractional signed whole numeric values with a value of 0 or more
+"""
+scalar NonNegativeInt
+
+"""
+Possible directions in which to order a list of items when provided an orderBy argument
+"""
+enum OrderDirection {
+  """Ascending order for a given orderBy argument"""
+  ASC
+
+  """Descending order for a given orderBy argument"""
+  DESC
+}
+
+"""
+Information about the Owner of a Site. Only privileged admin users are able to access owner data.
+"""
+type Owner implements UserInterface {
+  """User's email address"""
+  email: String
+
+  """User's first name"""
+  firstName: String
+
+  """The Owner ID"""
+  id: ID!
+
+  """User's last name"""
+  lastName: String
+
+  """User's profile"""
+  profile: Profile
+}
+
+"""Scorm package"""
+type Package {
+  """The Scorm CMIs"""
+  cmis(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): BaseProgressConnection
+}
+
+"""Information about pagination in a connection."""
+type PageInfo {
+  """When paginating forwards, are there more items?"""
+  hasNextPage: Boolean!
+
+  """When paginating backwards, are there more items?"""
+  hasPreviousPage: Boolean!
+
+  """When paginating backwards, the cursor to continue."""
+  startCursor: String
+
+  """When paginating forwards, the cursor to continue."""
+  endCursor: String
+}
+
+"""Represents a Pdf Content"""
+type PdfContent implements ContentInterface {
+  """Represents the type of the Content"""
+  contentType: ContentType!
+
+  """The date when the Content was created"""
+  createdAt: DateTime!
+
+  """The unique Content ID"""
+  id: ID!
+
+  """Represents individual settings specific to the PDF content"""
+  settings: PdfContentSettings!
+
+  """The date when the Content was updated"""
+  updatedAt: DateTime!
+
+  """The URL address used to display the Pdf"""
+  url: URL
+}
+
+"""Represents individual settings specific to the PDF content"""
+type PdfContentSettings {
+  """Whether the pdf content can be downloaded"""
+  downloadable: Boolean!
+}
+
+"""
+The full set of permissions available for building custom roles, organized by groups, collections, and individual entries.
+"""
+type PermissionCatalog {
+  """
+  The top-level permission groups in the catalog, such as Courses and Communities.
+  """
+  groups: [PermissionGroup!]!
+}
+
+"""
+A named set of related permissions within a permission group, such as Manage Courses.
+"""
+type PermissionCollection {
+  """An optional description displayed under this collection's header."""
+  description: String
+
+  """The identifier for this collection, such as 'manage_courses'."""
+  key: String!
+
+  """The display name of this collection."""
+  label: String!
+
+  """The individual permissions in this collection."""
+  permissions: [PermissionEntry!]!
+}
+
+"""A single assignable permission that can be included in a custom role."""
+type PermissionEntry {
+  """
+  The permission key to include when creating or updating a custom role, such as 'edit:course'.
+  """
+  key: String!
+
+  """The display name of this permission."""
+  label: String!
+
+  """
+  Other permission keys that must also be selected when this permission is granted.
+  """
+  requires: [String!]!
+}
+
+"""
+A top-level domain in the permission catalog, such as Courses or Communities.
+"""
+type PermissionGroup {
+  """Collections of related permissions within this group."""
+  collections: [PermissionCollection!]!
+
+  """An optional description displayed under this group's header."""
+  description: String
+
+  """The identifier for this group, such as 'courses'."""
+  key: String!
+
+  """The display name of this group."""
+  label: String!
+
+  """
+  Whether permissions in this group are site-wide or scoped to specific resources.
+  """
+  scopeType: ScopeType
+}
+
+"""A physical address used to determine the applicable tax jurisdiction."""
+input PhysicalAddressInput {
+  """City, town, or village."""
+  city: String!
+
+  """ISO 3166-1 alpha-2 country code (e.g. "US", "JP")."""
+  country: String!
+
+  """Street address or P.O. box."""
+  line1: String!
+
+  """Apartment, suite, floor, etc."""
+  line2: String
+
+  """ZIP or postal code."""
+  postalCode: String!
+
+  """State, province, or region code (e.g. "CA", "ON")."""
+  state: String
+}
+
+"""Autogenerated input type of PinPost"""
+input PinPostInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The ID of the post to pin"""
+  postId: ID!
+}
+
+"""Autogenerated return type of PinPost."""
+type PinPostPayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The post"""
+  post: Post
+
+  """The list of errors that occurred from this mutation"""
+  userErrors: [CommunitiesUserError!]
+}
+
+"""Post information"""
+type Post {
+  """Attachments on the Post"""
+  attachments(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): AttachmentConnection
+
+  """The post author"""
+  author: User
+
+  """The post content"""
+  content: String
+
+  """When the post was created"""
+  createdAt: DateTime
+
+  """Nesting depth (0 = top-level post, 1 = reply, 2 = reply to reply)"""
+  depth: Int!
+
+  """Timestamp of the last time this post was edited"""
+  editedAt: DateTime
+
+  """Followers on a Post or Reply"""
+  followers(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): FollowerConnection
+
+  """The unique Post ID"""
+  id: ID!
+
+  """The current user's interactions with the post"""
+  interactions: Interactions
+
+  """Timestamp of the last time this post was interacted with"""
+  lastInteractionAt: DateTime
+
+  """Timestamp of when the post was pinned"""
+  pinnedAt: DateTime
+
+  """Reactions on a Post or Reply"""
+  reactions(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Filter by reaction type"""
+    reactionType: ReactionType
+  ): ReactionConnection!
+
+  """Replies on a Post or Reply"""
+  replies(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Post replies order by"""
+    orderBy: PostOrderByInput
+  ): PostConnection
+
+  """Number of direct replies"""
+  replyCount: Int!
+
+  """The post title"""
+  title: String
+
+  """The post type"""
+  type: String
+
+  """Timestamp of when the post was updated"""
+  updatedAt: DateTime
+}
+
+"""The connection type for Post."""
+type PostConnection {
+  """A list of edges."""
+  edges: [PostEdge]
+
+  """A list of nodes."""
+  nodes: [Post]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total number of posts, comments, or replies"""
+  totalCount: Int!
+}
+
+"""An edge in a connection."""
+type PostEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: Post
+}
+
+"""Post filters"""
+input PostFilterInput {
+  """Filter by community id"""
+  communityId: ID
+
+  """Filter to only include pinned posts"""
+  pinned: Boolean
+
+  """Filter by post author user global id (ULID)"""
+  userGid: ID
+}
+
+"""Post ordering fields and direction"""
+input PostOrderByInput {
+  direction: OrderDirection!
+  field: PostOrderField!
+}
+
+"""Post OrderBy fields"""
+enum PostOrderField {
+  """Order posts by created_at"""
+  CREATED_AT
+
+  """Order posts by interaction_score"""
+  INTERACTION_SCORE
+
+  """Order posts by last_interaction_at"""
+  LAST_INTERACTION_AT
+
+  """Order posts by pinned_at"""
+  PINNED_AT
+
+  """Order posts by published_at"""
+  PUBLISHED_AT
+
+  """Order posts by reply_count"""
+  REPLY_COUNT
+
+  """Order posts by title"""
+  TITLE
+
+  """Order posts by updated_at"""
+  UPDATED_AT
+}
+
+"""Represents a Presentation Content"""
+type PresentationContent implements ContentInterface {
+  """Represents the type of the Content"""
+  contentType: ContentType!
+
+  """The date when the Content was created"""
+  createdAt: DateTime!
+
+  """The unique Content ID"""
+  id: ID!
+
+  """
+  Source URL for the PDF that was used to create the presentation slides.
+  """
+  sourceUrl: URL
+
+  """The date when the Content was updated"""
+  updatedAt: DateTime!
+}
+
+"""Product"""
+type Product {
+  """The product ID"""
+  id: ID!
+
+  """The community space this product is linked to, if any"""
+  linkedSpace: Space
+
+  """The additional prices for the Product"""
+  additionalPrices(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): ProductPriceConnection
+
+  """Card Image URL of the product"""
+  cardImageUrl: URL
+
+  """The categories the Product belongs to"""
+  categories(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): CategoryConnection
+
+  """The URL address for the checkout page of the Product"""
+  checkoutUrl: URL
+
+  """The date when the Product was created"""
+  createdAt: DateTime!
+
+  """The description of the Product"""
+  description: String
+
+  """A list of user entitlements for this product"""
+  entitlements(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Possible filters for entitlements"""
+    filter: ProductEntitlementFilterInput
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): EntitlementConnection
+
+  """Whether the is hidden or not(visible)"""
+  hidden: Boolean!
+
+  """The image of the Product"""
+  image: Image
+
+  """The content record this Product is built around"""
+  item: ProductItemInterface
+
+  """The id of the Product's item"""
+  itemId: ID!
+
+  """The type of the Product's item"""
+  itemType: ProductItemType!
+
+  """The URL address for the landing page of the Product"""
+  landingPageUrl: URL
+
+  """Whether the product is a lead magnet"""
+  leadMagnet: Boolean!
+
+  """The name of the Product"""
+  name: String!
+
+  """The position of the Product in the manual sort order"""
+  position: Int
+
+  """The primary price for the Product"""
+  primaryPrice: ProductPrice!
+
+  """Whether the product is private or not(public)"""
+  private: Boolean!
+
+  """The Product Page Funnel for this Product"""
+  productPageFunnel: Funnel
+
+  """The productable Id"""
+  productableId: ID! @deprecated(reason: "Use `itemId` instead.")
+
+  """The productable type"""
+  productableType: ProductType! @deprecated(reason: "Use `itemType` instead.")
+
+  """The date when the Product was published"""
+  publishedAt: DateTime
+
+  """The url by which one can be directed to continue the product"""
+  resumeUrl: URL
+
+  """The product slug"""
+  slug: String
+
+  """The publication status of the Product"""
+  status: ProductStatus!
+
+  """The date when the Product was updated"""
+  updatedAt: DateTime!
+}
+
+"""Look up a Product by exactly one of the provided keys (@oneOf)"""
+input ProductByInput {
+  """The Product's own id"""
+  id: ID
+
+  """A reference to the content record the Product is built around"""
+  item: ProductItemRefInput
+}
+
+"""The connection type for Product."""
+type ProductConnection {
+  """A list of edges."""
+  edges: [ProductEdge]
+
+  """A list of nodes."""
+  nodes: [Product]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total number of user's products"""
+  totalCount: Int!
+}
+
+"""An edge in a connection."""
+type ProductEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: Product
+}
+
+"""Filter options for querying entitlements on a product"""
+input ProductEntitlementFilterInput {
+  """Filter by entitlements created within a range"""
+  createdAt: DateTimeRangeInput
+
+  """
+  Filter by entitlements expiring within a range. Entitlements that never expire are excluded
+  """
+  expiryDate: DateTimeRangeInput
+
+  """Filter by the current status of the user's access"""
+  status: EntitlementStatus
+
+  """Filter by the user GID"""
+  userGid: ID
+}
+
+"""Possible fields to filter products"""
+input ProductFilter {
+  """Search by archived products"""
+  archived: Boolean
+
+  """Search by products that can show a given order bump"""
+  canShowOrderBump: ID
+
+  """Search by category id"""
+  categoryIds: [Int!]
+
+  """
+  By default, all products are returned. If filter is applied, only products in
+  which the current user is enrolled will be included in the result set."
+  """
+  enrolledProductsOnly: Boolean
+
+  """
+  By default, all products are returned. If filter is applied, products the
+  current user is enrolled in will be excluded from the result set.
+  """
+  excludeEnrolledProducts: Boolean
+
+  """
+  By default, all live events are returned. If filter is applied, live events
+  that have lapsed will be excluded from the result set.
+  """
+  excludeExpiredLiveEvents: Boolean
+
+  """
+  Scope results to products linked to these groups. If none of the supplied
+  groups have linked products, no constraint is applied (all products are returned).
+  """
+  groupIds: [ID!]
+
+  """
+  Search by hidden products. Filter is not available for students and unauthenticated users.
+  """
+  hidden: Boolean
+
+  """Search by product ids"""
+  ids: [ID!]
+
+  """Search by products that support in-app purchases"""
+  inAppPurchaseSupported: Boolean
+
+  """
+  When true, includes private products in results for authenticated users. Used
+  for product discovery in places like the Learner Hub Catalog.
+  """
+  includePrivateForDiscovery: Boolean
+
+  """
+  By default, all non-scorm course prodcuts are returned. If filter is applied,
+  prodcuts the current user is enrolled in will be excluded from the result set.
+  """
+  includeScormCourseProducts: Boolean
+
+  """Search by products that are lead magnets"""
+  leadMagnets: Boolean
+
+  """Search by product name."""
+  name: String
+
+  """Search by price type of both primary and additional prices"""
+  priceType: [ProductPriceType!]
+
+  """Search by primary price type"""
+  primaryPrice: [ProductPriceType!]
+
+  """Search by private products. Filter is not available for students."""
+  private: Boolean
+
+  """Search by product type"""
+  productType: [ProductType!]
+
+  """
+  When true, scopes results to products linked to the current user's most
+  recently joined group. Falls back to all products if the latest group has no
+  linked products or the user belongs to no groups.
+  """
+  withinUserGroups: Boolean
+}
+
+"""
+A common interface for the content types that a Product can be built around — such as a Course or Community
+"""
+interface ProductItemInterface {
+  """The image of the item"""
+  cardImage: Image!
+
+  """The name of the Item"""
+  name: String!
+
+  """The unique slug used to construct the item's URL"""
+  slug: String!
+}
+
+"""The connection type for ProductItemInterface."""
+type ProductItemInterfaceConnection {
+  """A list of edges."""
+  edges: [ProductItemInterfaceEdge]
+
+  """A list of nodes."""
+  nodes: [ProductItemInterface]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type ProductItemInterfaceEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: ProductItemInterface
+}
+
+"""A reference to the content record a Product is built around"""
+input ProductItemRefInput {
+  """The id of the Product's item"""
+  id: ID!
+
+  """The type of the Product's item"""
+  type: ProductItemType!
+}
+
+"""The type of content record a Product can be built around"""
+enum ProductItemType {
+  """The item is a bundle"""
+  BUNDLE
+
+  """The item is a community"""
+  COMMUNITY
+
+  """The item is a course"""
+  COURSE
+
+  """The item is a digital download"""
+  DIGITAL_DOWNLOAD
+
+  """The item is a live event"""
+  LIVE_EVENT
+
+  """The item is a Thinker"""
+  THINKER
+}
+
+"""Possible fields to order products by"""
+input ProductOrderBy {
+  """Required when field is IN_GROUP_CATALOG"""
+  catalogGroupId: ID
+  direction: OrderDirection!
+  field: ProductOrderField!
+}
+
+"""Possible fields to order products"""
+enum ProductOrderField {
+  """Order products by their earliest category name (alphabetically)"""
+  CATEGORY_NAME
+
+  """Order products by created_at"""
+  CREATED_AT
+
+  """
+  Order products by whether they're in the given group's custom catalog — requires catalogGroupId on ProductOrderBy
+  """
+  IN_GROUP_CATALOG
+
+  """Order products by name"""
+  NAME
+
+  """Order products by position"""
+  POSITION
+
+  """Order products by product_type"""
+  PRODUCT_TYPE
+
+  """Order products by published_at"""
+  PUBLISHED_AT
+
+  """Order products by updated_at"""
+  UPDATED_AT
+}
+
+"""Pricing information for a Product"""
+type ProductPrice {
+  """
+  The amount for the ProductPrice, expressed in the subunit of the price currency
+  """
+  amount: Int
+
+  """The currency for the price"""
+  currency: String!
+
+  """
+  Days until enrollment expires after the countdown start (enrollment or course start, per expiry_starts_on)
+  """
+  daysUntilExpiry: Int
+
+  """The formatted price for the ProductPrice"""
+  displayPrice: String
+
+  """
+  When the enrollment expiry countdown starts: enrollment or course_start
+  """
+  expiryStartsOn: String
+
+  """The unique ProductPrice Id"""
+  id: ID!
+
+  """The amount for the ProductPrice"""
+  price: Float @deprecated(reason: "Use amount instead")
+
+  """The type associated to this price"""
+  priceType: ProductPriceType!
+}
+
+"""The connection type for ProductPrice."""
+type ProductPriceConnection {
+  """A list of edges."""
+  edges: [ProductPriceEdge]
+
+  """A list of nodes."""
+  nodes: [ProductPrice]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""
+Attributes for creating a product price via the public API. Money fields are
+expressed in the subunit of the product currency (e.g. 4999 for $49.99 USD).
+"""
+input ProductPriceCreateInput {
+  """
+  Civil end date for every new enrollment. Null clears. Omit to leave stored.
+  """
+  accessExpiresOn: Date
+
+  """The price amount expressed in the subunit of the product currency"""
+  amount: Int
+
+  """
+  For subscriptions, the first payment amount expressed in the subunit of the product currency
+  """
+  customFirstAmount: Int
+
+  """The number of days until the enrollment expires"""
+  daysUntilExpiry: Int
+
+  """
+  When the enrollment expiry countdown starts: enrollment or course_start
+  """
+  expiryStartsOn: String
+
+  """
+  Used for subscription and monthly (payment-plan) price. Values are day, week, month, and year
+  """
+  interval: String
+
+  """Number for the interval"""
+  intervalCount: Int
+
+  """The name for the price"""
+  label: String
+
+  """
+  A store-scoped key for idempotent price resolution. On the first call a price
+  is created and associated with this key; subsequent calls return the existing
+  price instead of creating a duplicate.
+  """
+  lookupKey: String
+
+  """Number of months for the payment-plan payment type"""
+  numberOfPayments: Int
+
+  """
+  The text displayed on the Buy Button on the course card and the course landing page
+  """
+  payButtonText: String
+
+  """Used for subscription price, values are day and month"""
+  trialInterval: String
+
+  """Number for the trialInterval"""
+  trialIntervalCount: Int
+
+  """The price payment type"""
+  type: ProductPriceType
+}
+
+"""An edge in a connection."""
+type ProductPriceEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: ProductPrice
+}
+
+"""Possible price type values"""
+enum ProductPriceType {
+  """The Product is free to purchase"""
+  FREE
+
+  """The product requires a one-time purchase"""
+  ONE_TIME
+
+  """The product is purchased through a payment plan"""
+  PAYMENT_PLAN
+
+  """The product creates a subscription"""
+  SUBSCRIPTION
+}
+
+"""The product publication status values"""
+enum ProductStatus {
+  """The product status is draft"""
+  DRAFT
+
+  """
+  The product status is in draft but has a Publish Request that is pending approval.
+  """
+  PENDING_APPROVAL
+
+  """The product status is preorder"""
+  PRESELL
+
+  """The product status is published"""
+  PUBLISHED
+}
+
+"""The product type values"""
+enum ProductType {
+  """The item is a bundle"""
+  BUNDLE
+
+  """The item is a community"""
+  COMMUNITY
+
+  """The item is a course"""
+  COURSE
+
+  """The item is a digital download"""
+  DIGITAL_DOWNLOAD
+
+  """The item is a live event"""
+  LIVE_EVENT
+
+  """The item is a Thinker"""
+  THINKER
+}
+
+"""A user profile"""
+type Profile {
+  """A User's avatar"""
+  avatar: Image
+}
+
+"""Query root for the App schema"""
+type Query {
+  """Find a community by ID"""
+  community(
+    """Community ID"""
+    id: ID!
+  ): Community
+
+  """Find a community user by ID"""
+  communityUser(
+    """Community ID (required when using user_id)"""
+    communityId: ID
+
+    """Community user ID"""
+    id: ID
+
+    """User ID"""
+    userId: ID
+  ): CommunityUser
+
+  """Find a post or reply by ID"""
+  post(
+    """Post or Reply ID"""
+    id: ID!
+  ): Post
+
+  """Find a space by ID"""
+  space(
+    """Space ID"""
+    id: ID!
+  ): Space
+
+  """Submission versions and email audit for one learner on one assignment"""
+  assignmentSubmissionHistory(
+    """Assignment id"""
+    assignmentId: ID!
+
+    """Learner user id"""
+    userId: ID!
+  ): AssignmentSubmissionHistory!
+
+  """Returns a Bundle by Id"""
+  bundle(
+    """The unique Id of the Bundle to return"""
+    id: ID!
+  ): Bundle
+
+  """Returns a Category by Id"""
+  category(
+    """The unique Id of the Category to return"""
+    id: ID!
+  ): Category
+
+  """Returns a Chapter by Id"""
+  chapter(
+    """The unique Id of the Chapter to return"""
+    id: ID!
+  ): Chapter
+
+  """Returns a Course by Id"""
+  course(
+    """The unique Id of the Course to return"""
+    id: ID!
+  ): Course
+
+  """Returns a Course by Slug"""
+  courseBySlug(
+    """The unique Slug of the Course"""
+    slug: String!
+  ): Course
+
+  """Returns a Group by Id"""
+  group(
+    """The unique Id of the Group to return"""
+    id: ID!
+  ): Group
+
+  """Returns a Lesson by Id"""
+  lesson(
+    """The unique Id of the Lesson to return"""
+    id: ID!
+  ): Lesson
+
+  """Me"""
+  me: User
+
+  """
+  Returns the full permission catalog for building custom roles, organized by
+  groups, collections, and individual permissions.
+  """
+  permissionCatalog(
+    """
+    When provided, only returns collections available for this default role slug
+    """
+    forRole: DefaultRoleSlug = null
+  ): PermissionCatalog
+
+  """Returns a Product by its id or by a reference to its item"""
+  product(
+    """
+    Look up the Product by exactly one key (its id or a reference to its item)
+    """
+    by: ProductByInput
+
+    """The unique Id of the Product to return"""
+    id: ID @deprecated(reason: "Use `by: { id: ... }` argument instead.")
+  ): Product
+
+  """Site"""
+  site: Site!
+
+  """Returns a User by Id"""
+  user(
+    """The global Id of the User to return"""
+    gid: ID!
+  ): User
+
+  """Returns a User by Email"""
+  userByEmail(
+    """The email address of the User"""
+    email: EmailAddress!
+  ): User
+}
+
+"""The resolved media asset behind a question or choice attachment"""
+type QuestionMediaAsset {
+  """Alt text inherited from the Asset Library"""
+  altText: String
+
+  """Composite id of the asset"""
+  id: ID!
+
+  """Medium-sized preview image URL"""
+  previewUrl: URL
+
+  """Small thumbnail URL"""
+  thumbnailUrl: URL
+
+  """URL to access the asset"""
+  url: URL
+}
+
+"""One media attachment on a question or answer choice"""
+type QuestionMediaSlotEntry {
+  """
+  The resolved asset, null if the stored id resolves to nothing for this tenant
+  """
+  asset: QuestionMediaAsset
+
+  """The stored composite id, always present"""
+  assetId: ID!
+
+  """Name captured at attach time; survives the asset being deleted"""
+  fileName: String
+}
+
+"""Represents information about a Quiz"""
+type Quiz {
+  """The date when the Quiz was created"""
+  createdAt: DateTime!
+
+  """The unique Quiz Id"""
+  id: ID!
+
+  """The name of the Quiz"""
+  name: String
+
+  """
+  If question bank is enabled, the number of returned questions will be determind by this field.
+  """
+  numberOfSelectedQuestions: Int
+
+  """The score needed to pass the Quiz"""
+  passingScore: Int
+
+  """If enabled questions will be randomized"""
+  questionBank: Boolean
+
+  """A list of Quiz questions"""
+  questions(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): QuizQuestionConnection!
+
+  """If enabled question explanations will show"""
+  showExplanation: Boolean!
+}
+
+"""Represents a user's answer to a quiz question"""
+type QuizAnswer {
+  """The user's selected choices to the question"""
+  choices: [QuizChoice!]!
+
+  """The answered question"""
+  question: QuizQuestion!
+}
+
+"""The connection type for QuizAnswer."""
+type QuizAnswerConnection {
+  """A list of edges."""
+  edges: [QuizAnswerEdge]
+
+  """A list of nodes."""
+  nodes: [QuizAnswer]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type QuizAnswerEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: QuizAnswer
+}
+
+"""Represents information about a Question choice"""
+type QuizChoice {
+  """If the choice is correct"""
+  correct: Boolean
+
+  """The unique Quiz choice Id"""
+  id: ID!
+
+  """Position of the choice in the list of choices"""
+  position: Int!
+
+  """Description of the choice"""
+  text: HTML!
+}
+
+"""The connection type for QuizChoice."""
+type QuizChoiceConnection {
+  """A list of edges."""
+  edges: [QuizChoiceEdge]
+
+  """A list of nodes."""
+  nodes: [QuizChoice]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type QuizChoiceEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: QuizChoice
+}
+
+"""The connection type for Quiz."""
+type QuizConnection {
+  """A list of edges."""
+  edges: [QuizEdge]
+
+  """A list of nodes."""
+  nodes: [Quiz]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""Represents a Quiz Content"""
+type QuizContent implements ContentInterface {
+  """Represents the type of the Content"""
+  contentType: ContentType!
+
+  """The date when the Content was created"""
+  createdAt: DateTime!
+
+  """The unique Content ID"""
+  id: ID!
+
+  """The Quiz information"""
+  quiz: Quiz
+
+  """The date when the Content was updated"""
+  updatedAt: DateTime!
+}
+
+"""An edge in a connection."""
+type QuizEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: Quiz
+}
+
+"""Possible fields to filter quizzes"""
+input QuizFilter {
+  """Search by date of which users completed the quiz"""
+  completedAt: DateTimeFilter
+
+  """Search by course name."""
+  courseName: String
+}
+
+"""Represents information about a Quiz question"""
+type QuizQuestion {
+  """A list of choices for the question"""
+  choices(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): QuizChoiceConnection!
+
+  """The unique Quiz question Id"""
+  id: ID!
+
+  """Position of the question in the list of questions"""
+  position: Int!
+
+  """Description of the question"""
+  prompt: HTML!
+
+  """An explanation of the correct answer"""
+  textExplanation: HTML
+
+  """The type of question"""
+  type: QuizQuestionType!
+}
+
+"""The connection type for QuizQuestion."""
+type QuizQuestionConnection {
+  """A list of edges."""
+  edges: [QuizQuestionEdge]
+
+  """A list of nodes."""
+  nodes: [QuizQuestion]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type QuizQuestionEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: QuizQuestion
+}
+
+"""The possible types of questions for a quiz"""
+enum QuizQuestionType {
+  """Typed answer (fill-in / numerical)"""
+  FILL_IN
+
+  """Match stems to options (all-or-nothing)"""
+  MATCHING
+
+  """There are muliple correct answers"""
+  MULTIPLE_ANSWERS
+
+  """There is only one correct answer"""
+  SINGLE_ANSWER
+
+  """True or false — two fixed choices, one credited"""
+  TRUE_FALSE
+}
+
+"""Represents information about a Quiz submission by a student"""
+type QuizSubmission {
+  """The amount of quiz attempts by the student"""
+  attempts: Int!
+
+  """The date when the Quiz submission was completed"""
+  completedAt: DateTime
+
+  """The amount of correct answers by the student"""
+  correctCount: Int!
+
+  """The date when the Quiz submission was created"""
+  createdAt: DateTime!
+
+  """The unique Quiz submission Id"""
+  id: ID!
+
+  """The amount of incorrect answers by the student"""
+  incorrectCount: Int!
+
+  """Whether or not the student has passed the quiz"""
+  passed: Boolean!
+
+  """The quiz this submission belongs to"""
+  quiz: Quiz!
+
+  """The student this submission belongs to"""
+  user: User!
+
+  """Student's answers to quiz questions"""
+  userAnswers(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): QuizAnswerConnection
+}
+
+"""The connection type for QuizSubmission."""
+type QuizSubmissionConnection {
+  """A list of edges."""
+  edges: [QuizSubmissionEdge]
+
+  """A list of nodes."""
+  nodes: [QuizSubmission]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type QuizSubmissionEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: QuizSubmission
+}
+
+"""Possible fields to filter quiz submission"""
+input QuizSubmissionFilter {
+  """Search by date of which users completed the quiz submission"""
+  completedAt: DateTimeFilter
+
+  """Search by course ids."""
+  courseIds: [ID!]
+
+  """Search by group ids."""
+  groupIds: [ID!]
+
+  """Search by question group (quiz) ids."""
+  questionGroupIds: [ID!]
+
+  """Search by user ids."""
+  userIds: [ID!]
+}
+
+"""The type of passing requirement for a quiz"""
+enum QuizType {
+  """The quiz requires a passing grade"""
+  PASS_FAIL
+
+  """The quiz does not require a passing grade"""
+  SIMPLE
+}
+
+"""Reaction information"""
+type Reaction {
+  """The reaction ID"""
+  id: ID!
+
+  """The type of reaction"""
+  reactionType: ReactionType
+
+  """The user who reacted"""
+  user: User
+}
+
+"""The connection type for Reaction."""
+type ReactionConnection {
+  """A list of edges."""
+  edges: [ReactionEdge]
+
+  """A list of nodes."""
+  nodes: [Reaction]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total number of post reactions"""
+  totalCount: Int!
+}
+
+"""An edge in a connection."""
+type ReactionEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: Reaction
+}
+
+"""The type of the post reaction"""
+enum ReactionType {
+  """Eyes reaction type"""
+  EYES
+
+  """Heart Eyes reaction type"""
+  HEART_EYES
+
+  """Joy reaction type"""
+  JOY
+
+  """Like reaction type"""
+  LIKE
+
+  """Open Mouth reaction type"""
+  OPEN_MOUTH
+
+  """Pensive reaction type"""
+  PENSIVE
+
+  """Tada reaction type"""
+  TADA
+
+  """Wave reaction type"""
+  WAVE
+
+  """Like reaction type"""
+  like @deprecated(reason: "Use LIKE instead")
+}
+
+"""Autogenerated input type of ReactToPost"""
+input ReactToPostInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The ID of the post or reply"""
+  postId: ID!
+
+  """The type of reaction"""
+  reactionType: ReactionType!
+}
+
+"""Autogenerated return type of ReactToPost."""
+type ReactToPostPayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The post"""
+  post: Post
+
+  """The list of errors that occurred from this mutation"""
+  userErrors: [CommunitiesUserError!]
+}
+
+"""Products related to Community Features (e.x. Courses -> Spaces)"""
+union RelatedItemUnion = Course | Space
+
+"""The connection type for RelatedItemUnion."""
+type RelatedItemUnionConnection {
+  """A list of edges."""
+  edges: [RelatedItemUnionEdge]
+
+  """A list of nodes."""
+  nodes: [RelatedItemUnion]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type RelatedItemUnionEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: RelatedItemUnion
+}
+
+"""Defines the fields for removing all roles from a team member."""
+input RemoveAllRolesInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The GID of the user to remove all roles from."""
+  userGid: ID
+}
+
+"""
+Returns the team member after all roles are removed, or validation errors.
+"""
+type RemoveAllRolesPayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The team member with all roles cleared."""
+  teamMember: TeamMember
+
+  """Errors on the input of a mutation"""
+  userErrors: [UserError!]
+}
+
+"""Autogenerated input type of ReplyToPost"""
+input ReplyToPostInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The content of the reply"""
+  content: String!
+
+  """The parent post id (max depth 2)"""
+  parentId: ID!
+}
+
+"""Autogenerated return type of ReplyToPost."""
+type ReplyToPostPayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The created reply"""
+  reply: Post
+
+  """The list of errors that occurred from this mutation"""
+  userErrors: [CommunitiesUserError!]
+}
+
+"""
+Selection strategy for this resource type. Provide exactly one of includedIds or selectAll.
+"""
+input ResourceScopeByInput {
+  """Specific resource IDs to grant access to."""
+  includedIds: [ID!]
+
+  """
+  Grant every resource of this type matching an optional name filter, minus excludedIds.
+  """
+  selectAll: ResourceScopeSelectAllInput
+}
+
+"""
+Identifies a resource to scope a role to by type and ID, or all resources of that type when allResources is true.
+"""
+input ResourceScopeInput {
+  """
+  Grant every resource of this type, including ones created in the future. When
+  true, omit `resourceScopeId`; providing both is rejected.
+  """
+  allResources: Boolean = false
+
+  """
+  The ID of the resource to scope access to. Omit when `allResources` is true.
+  """
+  resourceScopeId: ID
+
+  """The type of the resource, such as COURSE or COMMUNITY."""
+  resourceScopeType: ResourceScopeType!
+}
+
+"""
+Select every resource of the parent selection's type matching an optional name filter, minus excluded IDs.
+"""
+input ResourceScopeSelectAllInput {
+  """Resource IDs to exclude."""
+  excludedIds: [ID!]
+
+  """
+  Restricts the select-all set to resources whose name matches this string.
+  """
+  nameFilter: String
+}
+
+"""
+Specifies which resources of a given type to grant access to. Supports explicit IDs or a filtered select-all.
+"""
+input ResourceScopeSelectionInput {
+  """
+  How to select resources — provide exactly one strategy (explicit IDs or select-all).
+  """
+  by: ResourceScopeByInput
+
+  """Resource IDs to exclude when selectAll is true. Ignored otherwise."""
+  excludedIds: [ID!] @deprecated(reason: "Use by.selectAll.excludedIds")
+
+  """
+  Specific resource IDs to grant access to. Used when selectAll is false.
+  """
+  includedIds: [ID!] @deprecated(reason: "Use by.includedIds")
+
+  """
+  Restricts the select-all set to resources whose name matches this string. Only applies when selectAll is true.
+  """
+  nameFilter: String @deprecated(reason: "Use by.selectAll.nameFilter")
+
+  """The resource type this selection applies to."""
+  resourceScopeType: ResourceScopeType!
+
+  """
+  If true, grants access to all resources of this type matching nameFilter. When true, includedIds is ignored.
+  """
+  selectAll: Boolean = false @deprecated(reason: "Use by.selectAll")
+}
+
+"""
+The type of resource used to scope a custom role, such as a course, community, or group.
+"""
+enum ResourceScopeType {
+  """A product bundle."""
+  BUNDLE
+
+  """A community."""
+  COMMUNITY
+
+  """A single course."""
+  COURSE
+
+  """A digital download."""
+  DIGITAL_DOWNLOAD
+
+  """A group of students."""
+  GROUP
+
+  """A live event product."""
+  LIVE_EVENT
+
+  """A product."""
+  PRODUCT
+
+  """A seat group used for team training."""
+  SEAT_GROUP
+
+  """Groups used to scope which users a role can act on."""
+  USER_GROUPS
+}
+
+"""Possible download resource types"""
+enum ResourceType {
+  """Checklist"""
+  CHECKLIST
+
+  """Other"""
+  DOWNLOAD
+
+  """Ebook"""
+  EBOOK
+
+  """Framework"""
+  FRAMEWORK
+
+  """Guide"""
+  GUIDE
+
+  """Resource List"""
+  RESOURCE_LIST
+
+  """Template"""
+  TEMPLATE
+
+  """Whitepaper"""
+  WHITEPAPER
+
+  """Worksheet"""
+  WORKSHEET
+}
+
+"""
+Rich content in TipTap JSON format with type, version, and content fields
+"""
+scalar RichContent
+
+"""Represents label information for the scale question type"""
+type ScaleLabel {
+  """The label on the left side of the scale."""
+  leftLabel: String
+
+  """The label in the middle of the scale."""
+  middleLabel: String
+
+  """The label on the right side of the scale."""
+  rightLabel: String
+}
+
+"""
+Whether a permission group applies site-wide or is scoped to specific resources.
+"""
+enum ScopeType {
+  """Permissions apply site-wide. No resource selection is required."""
+  ACCOUNT_WIDE
+
+  """Permissions are scoped to specific bundles."""
+  BY_BUNDLE
+
+  """Permissions are scoped to specific communities."""
+  BY_COMMUNITY
+
+  """Permissions are scoped to specific courses."""
+  BY_COURSE
+
+  """Permissions are scoped to specific courses and/or groups."""
+  BY_COURSE_AND_GROUP
+
+  """Permissions are scoped to specific groups."""
+  BY_GROUP
+
+  """Permissions are scoped to specific products."""
+  BY_PRODUCT
+
+  """Permissions are scoped to specific seat groups."""
+  BY_SEAT_GROUP
+
+  """Permissions are scoped to users via group membership (Users domain)."""
+  BY_USER_GROUP
+}
+
+"""SCORM learner comment"""
+type ScormComment {
+  """Textual input"""
+  comment: String
+
+  """Comment type"""
+  commentType: String
+
+  """Point in the SCO to which the comment applies"""
+  location: String
+
+  """
+  Point in time at which the comment was created or most recently changed
+  """
+  timeStamp: String
+}
+
+"""How a SCORM course is marked complete"""
+enum ScormCompletionCriterion {
+  """Complete when: completed"""
+  COMPLETED
+
+  """Complete when: completed and passed"""
+  COMPLETED_AND_PASSED
+
+  """Complete when: completed and score"""
+  COMPLETED_AND_SCORE
+
+  """Complete when: passed"""
+  PASSED
+
+  """Complete when: score"""
+  SCORE
+}
+
+"""SCORM interaction correct response"""
+type ScormCorrectResponse {
+  """Correct response pattern"""
+  pattern: String
+}
+
+"""SCORM learner interaction"""
+type ScormInteraction {
+  """Interaction correct responses"""
+  correctResponses: [ScormCorrectResponse!]!
+
+  """Interaction identifier"""
+  id: String!
+
+  """Type of interaction"""
+  interactionType: String
+
+  """Response latency in seconds"""
+  latencySeconds: Float
+
+  """Learner response"""
+  learnerResponse: String
+
+  """Interaction objectives"""
+  objectives: [ScormInteractionObjective!]!
+
+  """Interaction result"""
+  result: String
+}
+
+"""SCORM interaction objective"""
+type ScormInteractionObjective {
+  """Interaction objective identifier"""
+  id: String!
+}
+
+"""How a SCORM course launches for learners"""
+enum ScormLaunchStyle {
+  """Launch in a separate popup window"""
+  POPUP
+
+  """Launch embedded in the standard in-page player"""
+  STANDARD
+}
+
+"""SCORM learning objective"""
+type ScormObjective {
+  """Completion status (SCORM 2004)"""
+  completionStatus: String
+
+  """Description (SCORM 2004)"""
+  description: String
+
+  """Objective identifier"""
+  id: String!
+
+  """Progress measure (SCORM 2004)"""
+  progressMeasure: Float
+
+  """Objective max score"""
+  scoreMax: Float
+
+  """Objective min score"""
+  scoreMin: Float
+
+  """Objective raw score"""
+  scoreRaw: Float
+
+  """Objective scaled score"""
+  scoreScaled: Float
+
+  """Status (SCORM 1.2)"""
+  status: String
+
+  """Success status (SCORM 2004)"""
+  successStatus: String
+}
+
+"""Community member ordering fields and direction"""
+input SearchableMemberOrderByInput {
+  direction: OrderDirection!
+  field: SearchableMemberOrderField!
+}
+
+"""Searchable community member order by fields"""
+enum SearchableMemberOrderField {
+  """Order searchable community members by email"""
+  EMAIL
+
+  """Order searchable community members by name"""
+  NAME
+}
+
+"""The available filters to search by"""
+enum SearchFilters {
+  """Add user's email to search params"""
+  EMAIL
+
+  """Add user's name to search params"""
+  NAME
+}
+
+"""Site Object"""
+type Site {
+  """The unique Site Id"""
+  id: ID!
+
+  """A list of the Site's Communities"""
+  communities(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Filter communities"""
+    filter: CommunitiesFilterInput
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Communities order by"""
+    orderBy: CommunityOrderByInput
+  ): CommunityConnection!
+
+  """
+  Aggregate counts of the Site's Assignment submissions, split by review state.
+  Mirrors assignmentSubmissions filters (status ignored).
+  """
+  assignmentSubmissionCounts(
+    """
+    Assignment submission filter (status/statuses are ignored — the counts split
+    on them). latestOnly still limits every bucket to the newest attempt per
+    learner and assignment.
+    """
+    filter: AssignmentSubmissionFilter
+  ): AssignmentSubmissionCounts!
+
+  """A list of the Site's Assignment submissions"""
+  assignmentSubmissions(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Assignment submission filter"""
+    filter: AssignmentSubmissionFilter
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Possible ordering for Assignment submissions"""
+    orderBy: AssignmentSubmissionOrderBy
+  ): AssignmentSubmissionConnection
+
+  """Information about the Site's branding settings"""
+  branding: SiteBranding
+
+  """A list of the Site's Bundles"""
+  bundles(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Possible filters for bundles"""
+    filter: BundleFilter
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): BundleConnection
+
+  """A list of the Site's Categories"""
+  categories(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Exclude the default category"""
+    excludeDefaultCategory: Boolean = false
+
+    """
+    By default, all categories are returned. If exclude_empty_categories is true
+    then categories containing only draft or hidden products or empty categories
+    will not be included
+    """
+    excludeEmptyCategories: Boolean
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Category order by"""
+    orderBy: CategoryOrderByInput
+  ): CategoryConnection!
+
+  """A list of the Site's Courses"""
+  courses(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Possible filters for list of courses"""
+    filter: CourseFilter
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): CourseConnection!
+
+  """The currency used by the Site"""
+  currency: String!
+
+  """
+  Returns a single custom role by ID. Returns an error if the role does not belong to the site.
+  """
+  customRole(
+    """The unique Id of the CustomRole to return"""
+    id: ID!
+  ): CustomRole
+
+  """
+  Returns users assigned to a specific custom role. Returns an error if the role does not belong to the site.
+  """
+  customRoleUsers(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """The custom role ID"""
+    customRoleId: ID!
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): CustomRoleUserConnection
+
+  """Returns all custom roles defined on the site."""
+  customRoles(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): CustomRoleConnection
+
+  """A list of the Site's Groups"""
+  groups(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Filter the returned groups"""
+    filter: GroupFilterInput
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Sort order for the returned groups"""
+    orderBy: GroupOrderByInput
+
+    """
+    When present and held by the actor, limit groups to their GroupScope for this permission
+    """
+    permission: GroupPermission
+  ): GroupConnection
+
+  """The name of the Site"""
+  name: String!
+
+  """The Site owner"""
+  owner: Owner
+
+  """A list of the Site's Products"""
+  products(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Possible filters for list of products"""
+    filter: ProductFilter
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Product order by"""
+    orderBy: ProductOrderBy
+  ): ProductConnection!
+
+  """A list of the Site's quiz submissions"""
+  quizSubmissions(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Possible filters for list of quiz submissions"""
+    filter: QuizSubmissionFilter
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): QuizSubmissionConnection
+
+  """A list of the Site's quizzes"""
+  quizzes(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Possible filters for list of quizzes"""
+    filter: QuizFilter
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): QuizConnection
+
+  """The settings of the Site"""
+  settings: SiteSettings!
+
+  """The subdomain of the Site"""
+  subdomain: String!
+
+  """The support email of the Site"""
+  supportEmail: EmailAddress
+
+  """A list of the Site's Survey Submissions"""
+  surveySubmissions(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Possible filters for list of survey submissions"""
+    filter: SurveySubmissionsFilter
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): SurveySubmissionConnection
+
+  """A list of the Site's Surveys"""
+  surveys(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Possible filters for list of surveys"""
+    filter: SurveysFilter
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): SurveyConnection
+
+  """Returns a single team member by GID."""
+  teamMember(
+    """The GID of the user to return"""
+    gid: ID
+  ): TeamMember
+
+  """
+  Returns all roles available for assignment, including default and custom roles.
+  """
+  teamMemberRoles: [TeamMemberRoleOption!]!
+
+  """
+  Returns a list of team members. Supports filtering by role, license type, and name or email.
+  """
+  teamMembers(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Possible filters for list of team members"""
+    filter: TeamMemberFilterInput
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Team members order by"""
+    orderBy: TeamMemberOrderByInput
+  ): TeamMemberConnection
+
+  """The public URL of the Site"""
+  url: URL!
+
+  """A list of the Site's Users"""
+  users(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Possible filters for list of users"""
+    filter: UserFilter
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): UserConnection
+}
+
+"""Represents information about the Site's branding"""
+type SiteBranding {
+  """The list of font options available for branding"""
+  availableFonts: [String!]!
+
+  """The course player theme settings"""
+  coursePlayer: CourseBranding
+}
+
+"""Site Settings"""
+type SiteSettings {
+  """
+  A stable identifier for the Site's settings. Shares the Site's global id.
+  """
+  id: ID!
+
+  """
+  The site-wide language used for all user-facing pages. Set by the Site Owner
+  and defaults to English. Can be overridden by a user's preferences, though
+  this field does not return any particular user's language override.
+  """
+  language: String!
+
+  """Privacy policy URL"""
+  privacyPolicyUrl: URL
+
+  """The support email used by the Site"""
+  supportEmail: EmailAddress!
+
+  """Terms of use URL"""
+  termsOfUseUrl: URL
+}
+
+"""Space information"""
+type Space {
+  """Space image field"""
+  cardImage: Image!
+
+  """The community associated with the space"""
+  community: Community
+
+  """Space description"""
+  description: String
+
+  """Space icon"""
+  iconName: String
+
+  """The unique space ID"""
+  id: ID!
+
+  """Space image field"""
+  image: Image @deprecated(reason: "Use card_image field instead")
+
+  """Whether a space is private or not"""
+  isPrivate: Boolean
+
+  """
+  The list of members for this community space. Applies to exclusive spaces only.
+  """
+  members(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): SpaceMemberConnection!
+
+  """Space name"""
+  name: String
+
+  """A list of the space's posts"""
+  posts(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Post filters"""
+    filter: PostFilterInput
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Posts order by"""
+    orderBy: PostOrderByInput
+  ): PostConnection
+
+  """Whether the space is read-only"""
+  readOnly: Boolean!
+
+  """A list of the community's related items"""
+  relatedItems(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): RelatedItemUnionConnection
+}
+
+"""The access type for a community space"""
+enum SpaceAccessType {
+  """Membership (bundle) access type"""
+  BUNDLE
+
+  """Course access type"""
+  COURSE
+
+  """Group access type"""
+  GROUP
+}
+
+"""The connection type for Space."""
+type SpaceConnection {
+  """A list of edges."""
+  edges: [SpaceEdge]
+
+  """A list of nodes."""
+  nodes: [Space]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total number of spaces"""
+  totalCount: Int!
+}
+
+"""An edge in a connection."""
+type SpaceEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: Space
+}
+
+"""User with access to an exclusive space"""
+type SpaceMember {
+  """The unique user access ID"""
+  id: ID!
+
+  """User information"""
+  user: User!
+}
+
+"""The connection type for SpaceMember."""
+type SpaceMemberConnection {
+  """A list of edges."""
+  edges: [SpaceMemberEdge]
+
+  """A list of nodes."""
+  nodes: [SpaceMember]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total number of members"""
+  totalCount: Int!
+}
+
+"""An edge in a connection."""
+type SpaceMemberEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: SpaceMember
+}
+
+"""
+Append-only email audit row for a submission version (side panel Messages)
+"""
+type SubmissionFeedbackEmail {
+  """Sanitized HTML body for admin display"""
+  bodyHtml: String!
+
+  """Why the email was sent"""
+  context: SubmissionFeedbackEmailContext!
+
+  """Underlying EmailDeliveryInstance id"""
+  emailDeliveryInstanceId: ID!
+
+  """SubmissionEmailDelivery id"""
+  id: ID!
+
+  """Admin who sent the email"""
+  sender: User
+
+  """When the email was sent"""
+  sentAt: DateTime!
+
+  """Plain-text preview derived from body or subject"""
+  snippet: String!
+
+  """Email subject"""
+  subject: String
+}
+
+"""Why a submission-tied email was sent"""
+enum SubmissionFeedbackEmailContext {
+  """Email sent from bulk approve/reject"""
+  BULK_REVIEW
+
+  """Standalone Email learner message"""
+  EMAIL_LEARNER
+
+  """Email sent as part of approve/reject review"""
+  REVIEW
+}
+
+"""One learner attempt for assignment submission history"""
+type SubmissionVersion {
+  """1-based chronological attempt index"""
+  attemptNumber: Int!
+
+  """When the attempt was submitted"""
+  createdAt: DateTime!
+
+  """Emails linked to this attempt (side panel only, not modal timeline)"""
+  emails: [SubmissionFeedbackEmail!]!
+
+  """Uploaded file metadata"""
+  file: AssignmentFile
+
+  """Submission id"""
+  id: ID!
+
+  """When the attempt was last reviewed"""
+  reviewedAt: DateTime
+
+  """Admin who reviewed the attempt; null for auto-approve and legacy rows"""
+  reviewer: User
+
+  """Review status"""
+  status: AssignmentSubmissionStatus
+}
+
+"""Represents information about a Survey"""
+type Survey {
+  """The date when the Survey was created"""
+  createdAt: DateTime!
+
+  """The unique Survey Id"""
+  id: ID!
+
+  """The name of the survey"""
+  name: String
+
+  """The list of questions in the survey"""
+  questions(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): SurveyQuestionConnection!
+
+  """The total number of questions in the survey"""
+  questionsCount: Int!
+
+  """
+  Whether the current user has submitted a response to this survey or any of its published versions
+  """
+  submittedResponse: Boolean!
+}
+
+"""Represents information about the user's response to a survey question"""
+type SurveyAnswer {
+  """The user's selected choices to the survey question"""
+  choices: [SurveyChoice!]!
+
+  """The survey question the user responded to"""
+  question: SurveyQuestion!
+
+  """Whether the user skipped the survey question"""
+  skipped: Boolean!
+
+  """The user response to a free text survey question"""
+  textResponse: String
+}
+
+"""The connection type for SurveyAnswer."""
+type SurveyAnswerConnection {
+  """A list of edges."""
+  edges: [SurveyAnswerEdge]
+
+  """A list of nodes."""
+  nodes: [SurveyAnswer]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type SurveyAnswerEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: SurveyAnswer
+}
+
+"""Represents information about a Survey choice"""
+type SurveyChoice {
+  """The unique Survey choice Id"""
+  id: ID!
+
+  """
+  Media attached at the given slot, ordered by position. Empty when nothing is attached.
+  """
+  mediaAttachments(
+    """Which attachment point to read"""
+    slot: MediaSlot!
+  ): [QuestionMediaSlotEntry!]!
+
+  """
+  The position this choice appears relative to other choices in the survey question
+  """
+  position: Int!
+
+  """The choice text in HTML format"""
+  text: HTML!
+
+  """The choice text in TipTap/ProseMirror JSON format"""
+  textJson: RichContent
+}
+
+"""The connection type for SurveyChoice."""
+type SurveyChoiceConnection {
+  """A list of edges."""
+  edges: [SurveyChoiceEdge]
+
+  """A list of nodes."""
+  nodes: [SurveyChoice]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type SurveyChoiceEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: SurveyChoice
+}
+
+"""The connection type for Survey."""
+type SurveyConnection {
+  """A list of edges."""
+  edges: [SurveyEdge]
+
+  """A list of nodes."""
+  nodes: [Survey]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""Represents a Survey Content"""
+type SurveyContent implements ContentInterface {
+  """Represents the type of the Content"""
+  contentType: ContentType!
+
+  """The date when the Content was created"""
+  createdAt: DateTime!
+
+  """The unique Content ID"""
+  id: ID!
+
+  """Information about the Survey"""
+  survey: Survey
+
+  """The date when the Content was updated"""
+  updatedAt: DateTime!
+}
+
+"""An edge in a connection."""
+type SurveyEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: Survey
+}
+
+"""Represents information about the survey question"""
+type SurveyQuestion {
+  """A list of choices for the question"""
+  choices(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): SurveyChoiceConnection!
+
+  """The unique Survey question Id"""
+  id: ID!
+
+  """If true, the question is optional, otherwise it is mandatory"""
+  isOptional: Boolean!
+
+  """The question labels if the question type is scale"""
+  label: ScaleLabel
+
+  """
+  Media attached at the given slot, ordered by position. Empty when nothing is attached.
+  """
+  mediaAttachments(
+    """Which attachment point to read"""
+    slot: MediaSlot!
+  ): [QuestionMediaSlotEntry!]!
+
+  """
+  The position the question appears relative to other questions in the survey.
+  """
+  position: Int!
+
+  """The question text in HTML format"""
+  prompt: HTML!
+
+  """The question text in TipTap/ProseMirror JSON format"""
+  promptJson: RichContent
+
+  """The question type"""
+  questionType: SurveyQuestionType!
+}
+
+"""The connection type for SurveyQuestion."""
+type SurveyQuestionConnection {
+  """A list of edges."""
+  edges: [SurveyQuestionEdge]
+
+  """A list of nodes."""
+  nodes: [SurveyQuestion]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type SurveyQuestionEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: SurveyQuestion
+}
+
+"""Possible question type values"""
+enum SurveyQuestionType {
+  """Open-ended text question"""
+  FREE_TEXT
+
+  """Multiple options can be selected"""
+  MULTIPLE_ANSWERS
+
+  """A rating system with a selection of values"""
+  RATING
+
+  """A range of values to choose from and includes left/middle/right labels"""
+  SCALE
+
+  """Only one option can be selected"""
+  SINGLE_ANSWER
+}
+
+"""Possible fields to filter surveys"""
+input SurveysFilter {
+  """Search by date of which users completed the survey"""
+  completedAt: DateTimeFilter
+
+  """Search by course name."""
+  courseName: String
+}
+
+"""Represents information about the student's survey submission"""
+type SurveySubmission {
+  """The time Survey submission was completed"""
+  completedAt: DateTime
+
+  """The Course associated with the Survey"""
+  course: Course
+
+  """The time the Survey submission was created"""
+  createdAt: DateTime!
+
+  """The unique Survey Submission Id"""
+  id: ID!
+
+  """The Survey associated with the Survey Submission"""
+  survey: Survey!
+
+  """The time the Survey Submission was last updated"""
+  updatedAt: DateTime!
+
+  """The User who submitted the Survey"""
+  user: User!
+
+  """The User's answers to the Survey"""
+  userAnswers(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): SurveyAnswerConnection
+}
+
+"""The connection type for SurveySubmission."""
+type SurveySubmissionConnection {
+  """A list of edges."""
+  edges: [SurveySubmissionEdge]
+
+  """A list of nodes."""
+  nodes: [SurveySubmission]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type SurveySubmissionEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: SurveySubmission
+}
+
+"""Possible fields to filter survey submissions"""
+input SurveySubmissionsFilter {
+  """Search by date of user survey completed"""
+  completedAt: DateTimeFilter
+
+  """Search survey submissions by Course IDs."""
+  courseIds: [ID!] = []
+
+  """Search by Group IDs."""
+  groupIds: [ID!] = []
+
+  """Search by User IDs."""
+  userIds: [ID!] = []
+}
+
+"""
+Defines the fields for replacing a user's current role with a different default or custom role.
+"""
+input SwitchRoleInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """
+  The ID of the custom role to remove. Mutually exclusive with fromDefaultRoleSlug.
+  """
+  fromCustomRoleId: ID
+
+  """
+  The stable identifier of the default role to remove. Mutually exclusive with fromCustomRoleId.
+  """
+  fromDefaultRoleSlug: DefaultRoleSlug
+
+  """
+  Resource scopes to apply to the new role assignment, if scoping is required.
+  """
+  resourceScopes: [ResourceScopeInput!]
+
+  """
+  The ID of the custom role to assign. Mutually exclusive with targetDefaultRoleSlug.
+  """
+  targetCustomRoleId: ID
+
+  """
+  The stable identifier of the default role to assign. Mutually exclusive with targetCustomRoleId.
+  """
+  targetDefaultRoleSlug: DefaultRoleSlug
+
+  """The GID of the user to switch roles for."""
+  userGid: ID
+}
+
+"""
+Returns the updated team member on success, and the new custom role assignment
+when switching to a custom role, or validation errors.
+"""
+type SwitchRolePayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The team member with their updated roles."""
+  teamMember: TeamMember
+
+  """Errors on the input of a mutation"""
+  userErrors: [UserError!]
+
+  """
+  The new custom role assignment. Only present when switching to a custom role.
+  """
+  userRole: CustomRoleAssignment
+}
+
+"""Possible fields to filter tax rate"""
+input TaxRateFilterInput {
+  """Country code"""
+  countryCode: String!
+
+  """Region"""
+  region: String
+
+  """Zip code"""
+  zipCode: String!
+}
+
+"""A user with admin-level access to the site."""
+type TeamMember {
+  """When this user was added to the site."""
+  dateAdded: DateTime!
+
+  """The user's email address."""
+  email: EmailAddress!
+
+  """The user's first name."""
+  firstName: String
+
+  """The user's full display name."""
+  fullName: String!
+
+  """The user's globally unique identifier."""
+  gid: ID!
+
+  """The user's last name."""
+  lastName: String
+
+  """The lifecycle state of the user account"""
+  lifecycleState: String
+
+  """
+  The stable role identifiers assigned to this user. Use these in mutation inputs.
+  """
+  roleSlugs: [String!]!
+
+  """The display names of this user's assigned roles."""
+  roles: [String!]!
+}
+
+"""The connection type for TeamMember."""
+type TeamMemberConnection {
+  """A list of edges."""
+  edges: [TeamMemberEdge]
+
+  """A list of nodes."""
+  nodes: [TeamMember]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total number of team members"""
+  totalCount: Int!
+}
+
+"""A single team member in a paginated list."""
+type TeamMemberEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: TeamMember
+}
+
+"""
+Options for filtering the team members list by role, license type, or name or email.
+"""
+input TeamMemberFilterInput {
+  """Filter by license type: FREE or LICENSED."""
+  memberType: TeamMemberType
+
+  """Filter by name or email address (partial match)."""
+  query: String
+
+  """Filter to members with one or more of these roles."""
+  roleSlugs: [String!]
+}
+
+"""Specifies the sort field and direction for the team members list."""
+input TeamMemberOrderByInput {
+  """The sort direction: ASC or DESC."""
+  direction: OrderDirection!
+
+  """The field to sort by."""
+  field: TeamMemberOrderField!
+}
+
+"""
+Options for ordering the team members list by role, license type, or name/email.
+"""
+enum TeamMemberOrderField {
+  """Sort by the date the user was added to the site."""
+  DATE_ADDED
+
+  """Sort by email address."""
+  EMAIL
+
+  """Sort by full name."""
+  FULL_NAME
+
+  """Sort by most recent sign-in date."""
+  LAST_SIGN_IN_AT
+
+  """Sort by license type (licensed or free)."""
+  MEMBER_TYPE
+
+  """Sort by stable role identifier."""
+  ROLE
+}
+
+"""
+A role available for assignment or filtering, including both default and custom roles.
+"""
+type TeamMemberRoleOption {
+  """The number of users currently assigned to this role."""
+  assignedUserCount: Int!
+
+  """
+  The ID of the custom role this option represents. Null for default roles.
+  """
+  customRoleId: ID
+
+  """A short description of what this role grants."""
+  description: String
+
+  """
+  Whether this is a custom role (true) or a built-in Thinkific role (false).
+  """
+  isCustom: Boolean!
+
+  """The display name of this role."""
+  label: String!
+
+  """
+  The resource types this role supports for scoping. Empty if the role is site-wide.
+  """
+  scopeTypes: [ResourceScopeType!]!
+
+  """
+  A stable identifier for this role. Use in filter inputs to narrow results by role.
+  """
+  slug: String!
+}
+
+"""Whether a team member uses a paid license seat or not."""
+enum TeamMemberType {
+  """
+  Does not count toward paid team member licenses, such as the site owner.
+  """
+  FREE
+
+  """Counts toward paid team member licenses."""
+  LICENSED
+}
+
+"""Represents a Text Content"""
+type TextContent implements ContentInterface {
+  """Represents the type of the Content"""
+  contentType: ContentType!
+
+  """The date when the Content was created"""
+  createdAt: DateTime!
+
+  """The description of the Text in HTML format"""
+  htmlDescription: HTML
+
+  """The unique Content ID"""
+  id: ID!
+
+  """The date when the Content was updated"""
+  updatedAt: DateTime!
+}
+
+"""Course player theme mode type values"""
+enum Theme {
+  """Light text on a dark background"""
+  DARK
+
+  """Dark text on a light background"""
+  LIGHT
+}
+
+"""A Thinker"""
+type Thinker implements ProductItemInterface {
+  """The image of the item"""
+  cardImage: Image!
+
+  """The name of the Item"""
+  name: String!
+
+  """The unique slug used to construct the item's URL"""
+  slug: String!
+}
+
+"""Defines the fields for removing a custom role from a user."""
+input UnassignCustomRoleInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The ID of the custom role to remove."""
+  customRoleId: ID!
+
+  """The GID of the user to remove the role from."""
+  userGid: ID
+}
+
+"""Returns the removed role assignment on success, or validation errors."""
+type UnassignCustomRolePayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """Errors on the input of a mutation"""
+  userErrors: [UserError!]
+
+  """The removed role assignment."""
+  userRole: CustomRoleAssignment
+}
+
+"""
+Defines the fields for removing resource scopes from a custom role assignment.
+"""
+input UnassignCustomRoleResourceScopesInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The ID of the custom role whose assignment is being updated."""
+  customRoleId: ID!
+
+  """The resource scopes to remove."""
+  resourceScopes: [ResourceScopeInput!]!
+
+  """The GID of the user whose access is being restricted."""
+  userGid: ID
+}
+
+"""
+Returns the updated role assignment with reduced scopes, or validation errors.
+"""
+type UnassignCustomRoleResourceScopesPayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """Errors on the input of a mutation"""
+  userErrors: [UserError!]
+
+  """The updated role assignment with reduced resource access."""
+  userRole: CustomRoleAssignment
+}
+
+"""Defines the fields for removing a built-in role from a team member."""
+input UnassignDefaultRoleInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The stable identifier of the default role to remove."""
+  roleSlug: DefaultRoleSlug!
+
+  """The GID of the user to remove the role from."""
+  userGid: ID
+}
+
+"""Returns the updated team member on success, or validation errors."""
+type UnassignDefaultRolePayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The team member with the role removed."""
+  teamMember: TeamMember
+
+  """Errors on the input of a mutation"""
+  userErrors: [UserError!]
+}
+
+"""Autogenerated input type of UnfollowPost"""
+input UnfollowPostInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The ID of the post or reply the user is following"""
+  postId: ID!
+}
+
+"""Autogenerated return type of UnfollowPost."""
+type UnfollowPostPayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The post"""
+  post: Post
+
+  """The list of errors that occurred from this mutation"""
+  userErrors: [CommunitiesUserError!]
+}
+
+"""Autogenerated input type of UnpinPost"""
+input UnpinPostInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The ID of the pinned post"""
+  postId: ID!
+}
+
+"""Autogenerated return type of UnpinPost."""
+type UnpinPostPayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The post"""
+  post: Post
+
+  """The list of errors that occurred from this mutation"""
+  userErrors: [CommunitiesUserError!]
+}
+
+"""Autogenerated input type of UpdateAssignmentSubmissionStatus"""
+input UpdateAssignmentSubmissionStatusInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """Optional message to send to the student's email"""
+  message: String
+
+  """Submission's status"""
+  status: AssignmentSubmissionStatus!
+
+  """The ID of the submission"""
+  submissionId: ID!
+}
+
+"""Autogenerated return type of UpdateAssignmentSubmissionStatus."""
+type UpdateAssignmentSubmissionStatusPayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The assignment submission"""
+  submission: AssignmentSubmission
+
+  """The list of errors that occurred from this mutation"""
+  userErrors: [AssignmentSubmissionError!]
+}
+
+"""
+Defines the fields for updating a custom role's name, description, or permissions.
+"""
+input UpdateCustomRoleInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The updated description. Omit to leave unchanged."""
+  description: String
+
+  """The ID of the custom role to update."""
+  id: ID!
+
+  """The updated display name. Omit to leave unchanged."""
+  name: String
+
+  """The new permission set. Replaces all existing permissions on the role."""
+  permissions: [String!]
+}
+
+"""Returns the updated custom role on success, or validation errors."""
+type UpdateCustomRolePayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The updated custom role."""
+  customRole: CustomRole
+
+  """Errors on the input of a mutation"""
+  userErrors: [UserError!]
+}
+
+"""Autogenerated input type of UpdatePost"""
+input UpdatePostInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The content of the post or reply"""
+  content: String
+
+  """The post or reply ID"""
+  id: ID!
+
+  """The space ID for this post (post only)"""
+  spaceId: ID
+
+  """The title of the post"""
+  title: String
+}
+
+"""Autogenerated return type of UpdatePost."""
+type UpdatePostPayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The updated post"""
+  post: Post
+
+  """The list of errors that occurred from this mutation"""
+  userErrors: [CommunitiesUserError!]
+}
+
+"""Autogenerated input type of UpdateProduct"""
+input UpdateProductInput {
+  """Sets the product card image URL"""
+  cardImageUrl: String
+
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """Sets the product description"""
+  description: String
+
+  """Sets the product as hidden or not(visible)"""
+  hidden: Boolean
+
+  """Sets the product name"""
+  name: String
+
+  """Sets the product as private or not(public)"""
+  private: Boolean
+
+  """The ID of the product"""
+  productId: ID!
+
+  """Sets the product slug"""
+  slug: String
+
+  """Sets the product status"""
+  status: ProductStatus
+}
+
+"""Autogenerated return type of UpdateProduct."""
+type UpdateProductPayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The updated product"""
+  product: Product
+
+  """Errors on the input of a mutation"""
+  userErrors: [UserError!]
+}
+
+"""Defines the fields for updating a team member's profile details."""
+input UpdateTeamMemberInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The updated email address. Omit to leave unchanged."""
+  emailAddress: EmailAddress
+
+  """The updated first name. Omit to leave unchanged."""
+  firstName: String
+
+  """The updated last name. Omit to leave unchanged."""
+  lastName: String
+
+  """The GID of the team member to update."""
+  userGid: ID!
+}
+
+"""Returns the updated team member on success, or validation errors."""
+type UpdateTeamMemberPayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The updated team member."""
+  teamMember: TeamMember
+
+  """Errors on the input of a mutation"""
+  userErrors: [UserError!]
+}
+
+"""A valid URL, transported as a string"""
+scalar URL
+
+"""User Object"""
+type User implements UserInterface {
+  """The global User ID"""
+  gid: ID!
+
+  """A list of the user's community memberships"""
+  communityMemberships(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Possible filters for community members"""
+    filter: CommunityUserFilterInput
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Member order by"""
+    orderBy: CommunityUserOrderByInput
+  ): CommunityUserConnection
+
+  """A list of the users's followed posts"""
+  followedPosts(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Possible filters for list of posts"""
+    filter: PostFilterInput
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Posts order by"""
+    orderBy: PostOrderByInput
+  ): PostConnection
+
+  """The User ID"""
+  id: ID!
+
+  """A list of Assignment submissions by the user"""
+  assignmentSubmissions(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """A list of course ids to filter by"""
+    courseIds: [ID!]
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Filter by submission status"""
+    status: AssignmentSubmissionStatus
+  ): AssignmentSubmissionConnection
+
+  """A list of certificates issued to the user"""
+  certificates(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Filter by course ID"""
+    courseId: ID
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): CertificateRecordConnection
+
+  """A list of user's courses"""
+  courses(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Possible filters for courses"""
+    filter: CourseFilter
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): CourseConnection
+
+  """The date and time the user was created"""
+  createdAt: DateTime!
+
+  """User's custom profile fields"""
+  customProfileFields(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """
+    Which custom profile fields to return. Defaults to checkout so existing
+    clients keep current checkout/signup-field behavior.
+    """
+    context: CustomProfileFieldContext = CHECKOUT
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): CustomProfileFieldConnection
+
+  """User's email address"""
+  email: String
+
+  """A list of product entitlements for the specified user"""
+  entitlements(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Possible filters for entitlements"""
+    filter: EntitlementFilterInput
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): EntitlementConnection
+
+  """User's first name"""
+  firstName: String
+
+  """A list of groups that the user belongs to"""
+  groups(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): GroupConnection
+
+  """Whether the user has any admin roles"""
+  hasAdminRole: Boolean
+
+  """Whether the user has any affiliate roles"""
+  hasAffiliateRole: Boolean
+
+  """User's last name"""
+  lastName: String
+
+  """User's profile"""
+  profile: Profile
+}
+
+"""The connection type for User."""
+type UserConnection {
+  """A list of edges."""
+  edges: [UserEdge]
+
+  """A list of nodes."""
+  nodes: [User]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total number of users"""
+  totalCount: Int!
+}
+
+"""An edge in a connection."""
+type UserEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: User
+}
+
+"""Represents an error in the input of a mutation"""
+type UserError {
+  """Code of the error"""
+  code: String!
+
+  """Description of the error"""
+  message: String!
+
+  """Which input value this error came from"""
+  path: [String!]
+}
+
+"""Possible fields to filter users"""
+input UserFilter {
+  """Search by user's external source."""
+  externalSource: String
+
+  """Search by Group IDs."""
+  groupId: [ID!]
+
+  """Search by user role"""
+  role: UserRole
+}
+
+"""A common interface for user types"""
+interface UserInterface {
+  """User's email address"""
+  email: String
+
+  """User's first name"""
+  firstName: String
+
+  """User's last name"""
+  lastName: String
+
+  """User's profile"""
+  profile: Profile
+}
+
+"""The user role values"""
+enum UserRole {
+  """
+  A Course Admin can manage courses and instructors for courses they are assigned to
+  """
+  COURSE_ADMIN
+
+  """
+  A Group Analyst can view and export student progress for groups they are assigned to
+  """
+  GROUP_ANALYST
+
+  """
+  A Group Order Admin can manage group orders and seats for group orders they purchase
+  """
+  GROUP_ORDER_ADMIN @deprecated(reason: "Use SEAT_MANAGER instead")
+
+  """A Partner has the same level of permissions as a Site Admin"""
+  PARTNER
+
+  """A Seat Manager can manage seats for group orders they purchase"""
+  SEAT_MANAGER
+
+  """
+  A Site Admin has the same level of permissions as a Site Owner with some
+  exceptions related to account ownership and payments
+  """
+  SITE_ADMIN
+
+  """A Student has access to the learning experience"""
+  STUDENT
+}
+
+"""Scorm Cmi Progress"""
+type V12Progress implements BaseProgress {
+  """The comments"""
+  comments: [ScormComment!]!
+
+  """The completion status"""
+  completionStatus: String
+
+  """The date when the Cmi Progress was created"""
+  createdAt: DateTime!
+
+  """The SCORM CMI Progress ID"""
+  id: ID!
+
+  """The interactions"""
+  interactions: [ScormInteraction!]!
+
+  """The objectives"""
+  objectives: [ScormObjective!]!
+
+  """The pass/fail"""
+  passFail: String
+
+  """The session time"""
+  sessionTime: String
+
+  """The date when the Cmi Progress was updated"""
+  updatedAt: DateTime!
+
+  """The SCORM version"""
+  version: String!
+}
+
+"""Scorm Cmi Progress"""
+type V2004Progress implements BaseProgress {
+  """The comments"""
+  comments: [ScormComment!]!
+
+  """The completion status"""
+  completionStatus: String
+
+  """The date when the Cmi Progress was created"""
+  createdAt: DateTime!
+
+  """The SCORM CMI Progress ID"""
+  id: ID!
+
+  """The interactions"""
+  interactions: [ScormInteraction!]!
+
+  """The objectives"""
+  objectives: [ScormObjective!]!
+
+  """The pass/fail"""
+  passFail: String
+
+  """The session time"""
+  sessionTime: String
+
+  """The date when the Cmi Progress was updated"""
+  updatedAt: DateTime!
+
+  """The SCORM version"""
+  version: String!
+}
+
+"""
+ISO8601-encoded date and time string. Input values must include an explicit UTC
+offset (e.g. "2026-07-09T14:24:00Z" or "2026-07-09T14:24:00-07:00").
+"""
+scalar ValidatedDateTime
+  @specifiedBy(url: "https://tools.ietf.org/html/rfc3339")
+
+"""Represents a video caption"""
+type VideoCaption {
+  """Video caption SRT file content."""
+  content: String
+
+  """Video caption download url"""
+  downloadUrl: URL
+
+  """Video caption language code - e.g. eng"""
+  languageCode: String
+
+  """Video caption language label - e.g. English"""
+  languageLabel: String
+}
+
+"""Represents a Video Content"""
+type VideoContent implements ContentInterface {
+  """The list of captions for the video"""
+  captions: [VideoCaption!]
+
+  """Represents the type of the Content"""
+  contentType: ContentType!
+
+  """The date when the Content was created"""
+  createdAt: DateTime!
+
+  """The list of downloadable files for the Video"""
+  downloads(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): DownloadFileConnection
+
+  """Video duration in seconds"""
+  durationInSeconds: Int
+
+  """Video file name"""
+  fileName: String
+
+  """Video file size - e.g. 320 KB"""
+  fileSize: String
+
+  """Video file type - e.g. video/mp4"""
+  fileType: MIME
+
+  """The description of the Video in HTML format"""
+  htmlDescription: HTML
+
+  """The unique Content ID"""
+  id: ID!
+
+  """The public video playback URL"""
+  playUrl: URL
+
+  """Represents individual settings specific to the Video content"""
+  settings: VideoContentSettings!
+
+  """Video thumbnail"""
+  thumbnail: URL
+
+  """The date when the Content was updated"""
+  updatedAt: DateTime!
+
+  """The video URL for authenticated apps"""
+  url(
+    """Returns video url by HLS format"""
+    hlsFormatUrl: Boolean = false
+  ): URL @deprecated(reason: "Use play_url instead")
+
+  """Video library ID"""
+  videoId: ID
+}
+
+"""Represents individual settings specific to the video content"""
+type VideoContentSettings {
+  """Whether or not video captions automatically show during Video play"""
+  autoShowCaptions: Boolean!
+
+  """Whether the Video content can be downloaded"""
+  downloadable: Boolean!
+}
+
+"""Autogenerated input type of ViewLesson"""
+input ViewLessonInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The ID of the lesson"""
+  lessonId: ID!
+}
+
+"""Autogenerated return type of ViewLesson."""
+type ViewLessonPayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The lesson"""
+  lesson: Lesson
+
+  """Errors on the input of a mutation"""
+  userErrors: [UserError!]
+}
