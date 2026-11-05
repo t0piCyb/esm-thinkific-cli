@@ -1,10 +1,11 @@
 import pc from "picocolors";
 import { globalFlags } from "./config.js";
+import { updateState } from "./update.js";
 
 interface JsonEnvelope {
   ok: true;
   data: unknown;
-  meta?: { total?: number; page?: number };
+  meta?: { total?: number; page?: number; update?: unknown };
 }
 
 export function output(
@@ -34,6 +35,8 @@ function printJson(data: unknown): void {
   if (Array.isArray(data)) {
     envelope.meta = { total: data.length };
   }
+  // Agents reading JSON see a pending update even if they ignore stderr.
+  if (updateState.available) envelope.meta = { ...envelope.meta, update: updateState.available };
   console.log(JSON.stringify(envelope, null, 2));
 }
 

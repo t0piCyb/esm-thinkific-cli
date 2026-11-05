@@ -86,6 +86,7 @@ async function cli(...args: string[]) {
       ...process.env,
       HOME: home,
       THINKIFIC_API_TOKEN: "test-token",
+      ESM_CLI_NO_UPDATE_CHECK: "1",
       THINKIFIC_GRAPHQL_URL: `${server.url}stable/graphql`,
       THINKIFIC_GRAPHQL_BETA_URL: `${server.url}beta/graphql`,
     },

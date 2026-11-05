@@ -46,6 +46,7 @@ export const SUGGESTIONS: Record<number, string> = {
   401: "Check the token: esm-thinkific-cli auth test (new token: esm-thinkific-cli auth login)",
   403: "The token cannot do that (plan or token scope).",
   404: "Not found. Check the id (esm-thinkific-cli courses get <course> lists chapters and lessons).",
+  426: "This CLI is too old for the API. Update it: esm-thinkific-cli self-update",
   429: "Rate limited. Wait a minute and try again.",
   500: "Server error. Try again later.",
 };

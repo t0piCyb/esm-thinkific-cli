@@ -1,8 +1,10 @@
 #!/usr/bin/env bun
 import { Command } from "commander";
+import { selfUpdateCommand } from "./commands/self-update.js";
 import { authCommand } from "./commands/auth.js";
 import { gqlCommand, restCommand } from "./commands/raw.js";
 import { globalFlags } from "./lib/config.js";
+import { notifyUpdate } from "./lib/update.js";
 import { defaultProfile } from "./lib/session.js";
 import { chaptersResource } from "./resources/chapters.js";
 import { coursesResource } from "./resources/courses.js";
@@ -49,6 +51,7 @@ Quick start:
     globalFlags.noColor = root.color === false;
     globalFlags.noHeader = root.header === false;
     globalFlags.profile = root.profile ?? defaultProfile();
+    if (actionCmd.name() !== "self-update") notifyUpdate();
   });
 
 program.addCommand(authCommand);
@@ -57,5 +60,6 @@ program.addCommand(chaptersResource);
 program.addCommand(lessonsResource);
 program.addCommand(gqlCommand);
 program.addCommand(restCommand);
+program.addCommand(selfUpdateCommand);
 
 program.parse();

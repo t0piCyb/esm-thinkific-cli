@@ -88,3 +88,11 @@ trying workarounds.
 - `chapters delete` removes the lessons inside: confirm with the user, then `--yes`.
 - Content writes use Thinkific's **beta** API. If one fails with an unknown
   field or argument, the beta changed: report it, do not guess another mutation.
+
+## Updates
+
+Once a day esm-thinkific-cli checks GitHub for a newer version. When a command prints
+**Update available** on stderr (or `meta.update` in `--json` output), or an
+error says the CLI is too old: tell the user, run `esm-thinkific-cli self-update`, re-read
+this skill (it is updated with the CLI), then run the command again.
+`esm-thinkific-cli self-update --check` checks right away.
