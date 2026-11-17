@@ -1,11 +1,15 @@
 import { homedir } from "os";
 import { join } from "path";
+import pkg from "../../package.json";
 
 /** Application name */
 export const APP_NAME = "esm-thinkific";
 
 /** CLI binary name */
 export const APP_CLI = "esm-thinkific-cli";
+
+/** Sent to the FTO app as `x-cli-version: esm-thinkific-cli/<version>`. */
+export const APP_VERSION = pkg.version;
 
 /**
  * Thinkific GraphQL API. Reads go to `stable`; course content mutations
@@ -46,4 +50,8 @@ export const globalFlags = {
   noHeader: false,
   /** Resolved once by the root preAction hook: flag > env > active > fallback. */
   profile: "",
+  /** FTO profile (prod, dev, local) for FTO mode; empty = ESM_FTO_PROFILE, then esm-fto-cli's active one. */
+  ftoProfile: "",
+  /** Direct mode: the Thinkific site token instead of the FTO tools (--direct or THINKIFIC_API_TOKEN). */
+  direct: false,
 };

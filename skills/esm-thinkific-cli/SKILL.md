@@ -6,26 +6,34 @@ category: "productivity"
 
 # esm-thinkific-cli
 
-Direct CLI for Thinkific, the site where Encounter's courses are taught. It
-uses the site's **API access token** and acts with full admin rights on the
-whole site: every write is visible to students unless the lesson is a draft.
+CLI for Thinkific, the site where Encounter's courses are taught. By default
+it goes through the **FTO app** (its `thinkific_*` tools) with the user's own
+**FTO API key**: the Thinkific site token stays on the FTO server, FTO checks
+the role (staff or admin) and only writes to allowlisted courses (dev: the
+test course 3512623). Every write is visible to students unless the lesson or
+course is a draft.
 
 ## Setup
 
 ```bash
-esm-thinkific-cli auth test         # which site, token expiry
-esm-thinkific-cli auth list         # stored tokens (* = active)
+esm-thinkific-cli auth test         # FTO app, user, role, Thinkific reachable
 ```
 
-If no token is stored, ask the user to log in themselves (the token is
-prompted, never pasted in a chat). They create it in Thinkific: Settings >
-Code & analytics > API access tokens.
+It uses the key `esm-fto-cli` stores. If there is none, ask the user to create
+one in the FTO app (Account > API keys) and run, themselves:
 
 ```bash
-esm-thinkific-cli auth login --profile encounter --expires <yyyy-mm-dd>
+esm-fto-cli auth set <key> --profile prod
 ```
 
-`THINKIFIC_API_TOKEN` overrides the stored profiles (agents, CI).
+`--fto dev` (or `local`) targets another FTO app; `ESM_FTO_PROFILE`,
+`ESM_FTO_API_KEY` and `ESM_FTO_API_URL` override the stored profile, key and URL.
+
+**Direct mode (admins only):** `--direct` uses the Thinkific site token
+(`auth login --profile encounter`, prompted, never pasted in a chat; or
+`THINKIFIC_API_TOKEN`, which switches to direct mode by itself). Only needed
+for the commands FTO does not have yet: `courses update/duplicate`,
+`chapters get/move/delete`, `lessons move/copy`, `gql`, `rest`.
 
 ## References
 
@@ -37,34 +45,39 @@ esm-thinkific-cli auth login --profile encounter --expires <yyyy-mm-dd>
 
 ```bash
 # Courses
-esm-thinkific-cli courses list [--search "Year 1"] [--status PUBLISHED,DRAFT] [--archived]
+esm-thinkific-cli courses list [--search "Year 1"] [--status PUBLISHED|DRAFT] [--archived]
 esm-thinkific-cli courses get <course>                 # chapters + lessons (ids, type, draft)
 esm-thinkific-cli courses export <course> -o <dir>     # course.json + lessons/*.html
-esm-thinkific-cli courses update <course> [--name] [--description] [--slug] [--status DRAFT|PUBLISHED] [--hidden|--visible] [--private|--public] [--dry-run]
-esm-thinkific-cli courses duplicate <course>           # copy of the whole course (background job)
 
 # Chapters
-esm-thinkific-cli chapters get <chapter-id>
-esm-thinkific-cli chapters create <course> --name "Session 4" [--position n]
-esm-thinkific-cli chapters rename <chapter-id> --name "..."
-esm-thinkific-cli chapters move <chapter-id> --course <course> --to <n>
-esm-thinkific-cli chapters delete <chapter-id> --yes   # deletes its lessons too
+esm-thinkific-cli chapters create <course> --name "Session 4" [--position n] [--dry-run]
+esm-thinkific-cli chapters rename <chapter-id> --course <course> --name "..." [--dry-run]
 
 # Lessons
 esm-thinkific-cli lessons get <lesson-id>              # type, settings, media URLs, files, captions
 esm-thinkific-cli lessons html <lesson-id> [-o lesson.html]
-esm-thinkific-cli lessons create <chapter-id> --name "..." -f page.html [--draft] [--free] [--position n] [--dry-run]
+esm-thinkific-cli lessons create <chapter-id> --course <course> --name "..." -f page.html [--publish] [--position n] [--dry-run]
 esm-thinkific-cli lessons update <lesson-id> [-f page.html | --html "..."] [--name "..."] [--draft|--publish] [--dry-run]
-esm-thinkific-cli lessons move <lesson-id> --chapter <chapter-id> --to <n>
-esm-thinkific-cli lessons copy <lesson-id> --chapter <chapter-id> [--position n]
 
-# Anything else
-esm-thinkific-cli gql 'query Site { site { name url } }' [--vars '{...}'] [--beta|--stable]
-esm-thinkific-cli rest GET 'enrollments?query[course_id]=123&limit=25'
+# Direct mode only (--direct, Thinkific site token, admins)
+esm-thinkific-cli --direct courses update <course> [--name] [--description] [--slug] [--status] [--hidden|--visible] [--private|--public] [--dry-run]
+esm-thinkific-cli --direct courses duplicate <course>
+esm-thinkific-cli --direct chapters get <chapter-id>
+esm-thinkific-cli --direct chapters move <chapter-id> --course <course> --to <n>
+esm-thinkific-cli --direct chapters delete <chapter-id> --yes   # deletes its lessons too
+esm-thinkific-cli --direct lessons move <lesson-id> --chapter <chapter-id> --to <n>
+esm-thinkific-cli --direct lessons copy <lesson-id> --chapter <chapter-id> [--position n]
+esm-thinkific-cli --direct gql 'query Site { site { name url } }' [--vars '{...}']
+esm-thinkific-cli --direct rest GET 'enrollments?query[course_id]=123&limit=25'
 ```
 
-Global flags: `-p/--profile`, `--json`, `--format <text|json|csv|yaml>`,
-`--verbose` (shows each request's rate-limit cost), `--no-color`, `--no-header`.
+Global flags: `--fto <prod|dev|local>`, `--direct`, `-p/--profile` (token
+profile, direct mode), `--json`, `--format <text|json|csv|yaml>`, `--verbose`,
+`--no-color`, `--no-header`.
+
+Errors from FTO: 403 = not staff/admin, course outside the write allowlist, or
+not a TEXT lesson; 503 = the FTO server has no Thinkific token yet. Report
+them, do not switch to `--direct` on your own.
 
 ## What is not possible through the API
 
@@ -80,7 +93,9 @@ trying workarounds.
   never try a new kind of change on a live course. Ask which lesson is the test
   one if you do not know.
 - Run every write with `--dry-run` first when it exists, and show the user what
-  will change. Create new lessons with `--draft`, publish after review.
+  will change. New lessons are drafts unless `--publish`; publish after review.
+  Thinkific's API cannot delete a lesson, so a wrong `lessons create` stays
+  until someone removes it in the Thinkific editor.
 - `lessons update` saves the previous HTML in
   `~/.cache/esm-thinkific-cli/backups/<lesson-id>-<time>.html`; to undo,
   `lessons update <id> -f <backup>`.

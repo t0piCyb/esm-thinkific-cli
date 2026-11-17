@@ -6,7 +6,8 @@ import { readInput, writeOutput } from "../lib/io.js";
 import { log } from "../lib/logger.js";
 import { COPY_LESSON, CREATE_TEXT_LESSON, REORDER_LESSON, UPDATE_TEXT_LESSON } from "../lib/operations.js";
 import { output } from "../lib/output.js";
-import { backupLessonHtml, getLesson, type Lesson } from "../lib/thinkific.js";
+import { runTool } from "../lib/fto.js";
+import { backupHtml, backupLessonHtml, getLesson, isDirect, requireDirect, type Lesson } from "../lib/thinkific.js";
 
 type LessonResult = { id: string; title: string; draft: boolean; lessonType: string | null; chapter: { id: string; title: string } | null };
 
@@ -86,21 +87,45 @@ lessonsResource
   .description("Add a text lesson (HTML) to a chapter")
   .argument("<chapter-id>", "Chapter id (see: courses get <course>)")
   .requiredOption("--name <name>", "Lesson title")
+  .option("--course <course>", "Course id or slug of the chapter (required through FTO)")
   .option("-f, --file <file>", "HTML file, or - for stdin")
   .option("--html <html>", "HTML inline")
   .option("--position <n>", "Position in the chapter (default: last)")
-  .option("--draft", "Create it as a draft (hidden from students)")
-  .option("--free", "Free preview lesson")
+  .option("--draft", "Create it as a draft, hidden from students (the default)")
+  .option("--publish", "Create it visible to students")
+  .option("--free", "Free preview lesson (--direct only)")
   .option("--dry-run", "Print what would be sent, change nothing")
-  .addHelpText("after", "\nExample:\n  esm-thinkific-cli lessons create 123 --name \"Session 4 - Handouts\" -f session4.html --draft")
-  .action(async (chapterId: string, opts: { name: string; file?: string; html?: string; position?: string; draft?: boolean; free?: boolean; dryRun?: boolean }) => {
+  .addHelpText(
+    "after",
+    "\nLessons are created as drafts unless --publish. Thinkific's API cannot delete a lesson: dry-run first.\nExample:\n  esm-thinkific-cli lessons create 123 --course test --name \"Session 4 - Handouts\" -f session4.html --dry-run",
+  )
+  .action(async (chapterId: string, opts: { name: string; course?: string; file?: string; html?: string; position?: string; draft?: boolean; publish?: boolean; free?: boolean; dryRun?: boolean }) => {
     try {
+      if (opts.draft && opts.publish) throw new CliError(2, "Pass --draft or --publish, not both");
       const html = await htmlFrom(opts);
+      const draft = !opts.publish;
+      if (!isDirect()) {
+        if (!opts.course) throw new CliError(2, "--course <course> is required", "The course id or slug the chapter belongs to (courses get shows both)");
+        if (opts.free) throw new CliError(2, "--free is only available with --direct");
+        if (html === undefined) throw new CliError(2, "Give the lesson's HTML", "-f <file> or --html");
+        const result = await runTool<{ lesson?: LessonResult; chapter: { title: string } }>("thinkific_create_text_lesson", {
+          course: opts.course,
+          chapterId,
+          name: opts.name,
+          html,
+          draft,
+          position: opts.position !== undefined ? position(opts.position) : undefined,
+          dryRun: Boolean(opts.dryRun),
+        });
+        if (opts.dryRun || globalFlags.json || !result.lesson) output(result);
+        else log.success(`Lesson "${result.lesson.title}" (${result.lesson.id}) created in "${result.chapter.title}"${result.lesson.draft ? " as a draft" : ""}`);
+        return;
+      }
       const input = {
         chapterId,
         lessonSettingsInput: {
           name: opts.name,
-          draft: Boolean(opts.draft),
+          draft,
           free: Boolean(opts.free),
           ...(opts.position !== undefined && { position: position(opts.position) }),
         },
@@ -138,6 +163,30 @@ lessonsResource
       const html = await htmlFrom(opts);
       if (html === undefined && opts.name === undefined && !opts.draft && !opts.publish) {
         throw new CliError(2, "Nothing to change", "Pass -f/--html, --name, --draft or --publish");
+      }
+
+      if (!isDirect()) {
+        const result = await runTool<{ previous_html?: string | null; title_after: string; draft_after: boolean }>(
+          "thinkific_update_text_lesson",
+          {
+            lesson: id,
+            html,
+            name: opts.name,
+            draft: opts.draft ? true : opts.publish ? false : undefined,
+            dryRun: Boolean(opts.dryRun),
+          },
+        );
+        if (opts.dryRun) {
+          output(result);
+          return;
+        }
+        const backup = backupHtml(id, result.previous_html);
+        if (globalFlags.json) output({ ...result, previous_html: undefined, backup });
+        else {
+          log.success(`Lesson "${result.title_after}" (${id}) updated${result.draft_after ? " (draft)" : ""}`);
+          if (backup) log.info(`Previous HTML: ${backup}`);
+        }
+        return;
       }
 
       const lesson = await getLesson(id);
@@ -187,6 +236,7 @@ lessonsResource
   .requiredOption("--to <n>", "New position in that chapter, as shown by courses get")
   .action(async (id: string, opts: { chapter: string; to: string }) => {
     try {
+      requireDirect("lessons move");
       const { lesson } = await mutate<{ lesson: LessonResult }>(REORDER_LESSON, "reorderLesson", {
         lessonId: id,
         chapterId: opts.chapter,
@@ -207,6 +257,7 @@ lessonsResource
   .option("--position <n>", "Position in that chapter (default: last)")
   .action(async (id: string, opts: { chapter: string; position?: string }) => {
     try {
+      requireDirect("lessons copy");
       const { lesson } = await mutate<{ lesson: LessonResult }>(COPY_LESSON, "copyLesson", {
         lessonId: id,
         chapterId: opts.chapter,

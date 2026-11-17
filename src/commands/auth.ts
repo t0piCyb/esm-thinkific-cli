@@ -5,6 +5,8 @@ import { CliError, handleError } from "../lib/errors.js";
 import { log } from "../lib/logger.js";
 import { SITE } from "../lib/operations.js";
 import { output } from "../lib/output.js";
+import { ftoProfile, ftoUrl, runTool } from "../lib/fto.js";
+import { isDirect } from "../lib/thinkific.js";
 import {
   defaultProfile,
   hasAccount,
@@ -107,9 +109,23 @@ Examples:
 authCommand
   .command("test")
   .alias("whoami")
-  .description("Check the token and show the site it opens")
+  .description("Check the connection: FTO key and Thinkific tools (default), or the site token (--direct)")
   .action(async () => {
     try {
+      if (!isDirect()) {
+        const profile = ftoProfile();
+        const { user } = await runTool<{ user: { name: string; email: string; role: string | null } }>("whoami");
+        const { courses } = await runTool<{ courses: unknown[] }>("thinkific_list_courses", { limit: 1 });
+        output({
+          mode: "FTO (Thinkific token on the FTO server)",
+          ftoProfile: profile,
+          app: ftoUrl(profile),
+          user: `${user.name} <${user.email}>`,
+          role: user.role ?? "user",
+          thinkific: courses.length ? "reachable" : "reachable (no course)",
+        });
+        return;
+      }
       const { site, me } = await gql<SiteData>(SITE);
       const account = readAccount();
       output({

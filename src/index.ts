@@ -3,7 +3,7 @@ import { Command } from "commander";
 import { selfUpdateCommand } from "./commands/self-update.js";
 import { authCommand } from "./commands/auth.js";
 import { gqlCommand, restCommand } from "./commands/raw.js";
-import { globalFlags } from "./lib/config.js";
+import { APP_VERSION, globalFlags } from "./lib/config.js";
 import { notifyUpdate } from "./lib/update.js";
 import { defaultProfile } from "./lib/session.js";
 import { chaptersResource } from "./resources/chapters.js";
@@ -21,10 +21,12 @@ const program = new Command();
 program
   .name("esm-thinkific-cli")
   .description(
-    "Thinkific CLI for Encounter ESM: courses, chapters, lessons, lesson HTML, export.\nUses a Thinkific API access token (GraphQL: stable for reads, beta for content changes).",
+    "Thinkific CLI for Encounter ESM: courses, chapters, lessons, lesson HTML, export.\nGoes through the FTO app with your FTO API key (the same as esm-fto-cli): the Thinkific token stays on the FTO server.\nAdmins can use the Thinkific site token directly with --direct.",
   )
-  .version("0.1.0")
-  .option("-p, --profile <name>", "Site profile (default: THINKIFIC_PROFILE, then the active profile)")
+  .version(APP_VERSION)
+  .option("--fto <profile>", "FTO app: prod, dev, local or an esm-fto-cli profile (default: ESM_FTO_PROFILE, then esm-fto-cli's active profile)")
+  .option("--direct", "Use the Thinkific site token (auth login) instead of FTO; automatic when THINKIFIC_API_TOKEN is set", false)
+  .option("-p, --profile <name>", "Thinkific token profile for --direct (default: THINKIFIC_PROFILE, then the active profile)")
   .option("--json", "Output as JSON", false)
   .option("--format <fmt>", "Output format: text, json, csv, yaml", "text")
   .option("--verbose", "Enable debug logging (requests, rate-limit cost)", false)
@@ -36,7 +38,8 @@ program
 Courses are referenced by id or slug; chapters and lessons by the ids that \`courses get\` shows.
 
 Quick start:
-  esm-thinkific-cli auth login --profile encounter
+  esm-fto-cli auth set <key> --profile prod     # once: your FTO API key (Account > API keys)
+  esm-thinkific-cli auth test
   esm-thinkific-cli courses list
   esm-thinkific-cli courses get <course>
   esm-thinkific-cli lessons html <lesson-id> -o lesson.html
@@ -51,6 +54,8 @@ Quick start:
     globalFlags.noColor = root.color === false;
     globalFlags.noHeader = root.header === false;
     globalFlags.profile = root.profile ?? defaultProfile();
+    globalFlags.ftoProfile = root.fto ?? "";
+    globalFlags.direct = root.direct ?? false;
     if (actionCmd.name() !== "self-update") notifyUpdate();
   });
 

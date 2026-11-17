@@ -4,10 +4,19 @@ CLI for Thinkific (Encounter's course site), built with the
 [api2cli](https://api2cli.dev) structure. Third of the ESM CLIs:
 `esm-fto-cli`, `esm-alugha-cli`, `esm-thinkific-cli`.
 
-It talks to Thinkific's GraphQL API with a site **API access token**:
-reads on `https://api.thinkific.com/stable/graphql`, course content changes
-(chapters, text lessons) on `https://api.thinkific.com/beta/graphql`, the only
-API that has them. `rest` reaches the REST Admin API v1 with the same token.
+**FTO mode (default, from 0.2.0):** the CLI runs the FTO app's `thinkific_*`
+tools (`POST <app>/api/v1/tools/<name>`) with the user's personal FTO API key,
+the one `esm-fto-cli auth set` stores (`~/.config/tokens/esm-fto-cli-<profile>.txt`,
+URL in `~/.config/esm-fto-cli/state.json`). The Thinkific site token stays on
+the FTO server, FTO checks the role (staff / admin) and only writes to the
+courses of its write allowlist. `--fto prod|dev|local` picks the app.
+
+**Direct mode (`--direct`, admins):** the CLI talks to Thinkific's GraphQL API
+with the site **API access token**: reads on `https://api.thinkific.com/stable/graphql`,
+course content changes on `https://api.thinkific.com/beta/graphql`; `rest`
+reaches the REST Admin API v1. `THINKIFIC_API_TOKEN` switches to direct mode.
+Needed for `courses update/duplicate`, `chapters get/move/delete`,
+`lessons move/copy`, `gql` and `rest`, which have no FTO tool yet.
 
 ## What the Thinkific API allows (November 2026)
 
@@ -37,7 +46,14 @@ ln -s "$PWD/skills/esm-thinkific-cli" ~/.claude/skills/esm-thinkific-cli
 
 ## Configure
 
-A site owner or admin creates the token in Thinkific: **Settings > Code &
+FTO mode: create a key in the FTO app (Account > API keys), then
+
+```bash
+esm-fto-cli auth set <key> --profile prod
+esm-thinkific-cli auth test
+```
+
+Direct mode: a site owner or admin creates the token in Thinkific: **Settings > Code &
 analytics > API access tokens > Add API access token** (shown once, with an
 expiry date). The site's plan must include API access (Grow or above).
 

@@ -4,6 +4,7 @@ import { globalFlags } from "../lib/config.js";
 import { CliError, handleError } from "../lib/errors.js";
 import { readInput } from "../lib/io.js";
 import { output } from "../lib/output.js";
+import { requireDirect } from "../lib/thinkific.js";
 
 /**
  * Any Thinkific GraphQL operation with the stored token, for what the commands
@@ -22,6 +23,7 @@ export const gqlCommand = new Command("gql")
   )
   .action(async (query: string, opts: { vars: string; beta?: boolean; stable?: boolean }) => {
     try {
+      requireDirect("gql");
       if (opts.beta && opts.stable) throw new CliError(2, "Pass --beta or --stable, not both");
       const document = query === "-" || query.startsWith("@") ? await readInput(query === "-" ? "-" : query.slice(1)) : query;
       const api = opts.beta ? "beta" : opts.stable ? "stable" : undefined;
@@ -43,6 +45,7 @@ export const restCommand = new Command("rest")
   )
   .action(async (method: string, path: string, opts: { data?: string }) => {
     try {
+      requireDirect("rest");
       const verb = method.toUpperCase();
       if (!["GET", "POST", "PUT", "DELETE"].includes(verb)) throw new CliError(2, `Unsupported method ${method}`);
       const raw = opts.data?.startsWith("@") ? await readInput(opts.data.slice(1)) : opts.data;

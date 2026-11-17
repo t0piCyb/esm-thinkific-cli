@@ -5,7 +5,8 @@ import { CliError, handleError } from "../lib/errors.js";
 import { log } from "../lib/logger.js";
 import { CHAPTER, CREATE_CHAPTER, REMOVE_CHAPTER, REORDER_CHAPTER, UPDATE_CHAPTER } from "../lib/operations.js";
 import { output } from "../lib/output.js";
-import { getCourse } from "../lib/thinkific.js";
+import { runTool } from "../lib/fto.js";
+import { getCourse, isDirect, requireDirect } from "../lib/thinkific.js";
 
 type Chapter = { id: string; title: string; position: number };
 type ChapterDetail = Chapter & {
@@ -29,6 +30,7 @@ chaptersResource
   .argument("<chapter-id>", "Chapter id (see: courses get <course>)")
   .action(async (id: string) => {
     try {
+      requireDirect("chapters get (use: courses get <course>)");
       const { chapter } = await gql<{ chapter: ChapterDetail | null }>(CHAPTER, { id });
       if (!chapter) throw new CliError(404, `No Thinkific chapter ${id}`);
       if (globalFlags.format !== "text") {
@@ -53,8 +55,20 @@ chaptersResource
   .argument("<course>", "Course id or slug")
   .requiredOption("--name <name>", "Chapter title")
   .option("--position <n>", "Position in the course (default: last)")
-  .action(async (ref: string, opts: { name: string; position?: string }) => {
+  .option("--dry-run", "Check the course and the write allowlist, change nothing (through FTO)")
+  .action(async (ref: string, opts: { name: string; position?: string; dryRun?: boolean }) => {
     try {
+      if (!isDirect()) {
+        const result = await runTool<{ chapter?: Chapter; course: { name: string } }>("thinkific_create_chapter", {
+          course: ref,
+          name: opts.name,
+          position: opts.position !== undefined ? position(opts.position) : undefined,
+          dryRun: Boolean(opts.dryRun),
+        });
+        if (opts.dryRun || globalFlags.json || !result.chapter) output(result);
+        else log.success(`Chapter "${result.chapter.title}" (${result.chapter.id}) added to "${result.course.name}" at position ${result.chapter.position}`);
+        return;
+      }
       const course = await getCourse(ref);
       const { chapter } = await mutate<{ chapter: Chapter }>(CREATE_CHAPTER, "createChapter", {
         courseId: course.id,
@@ -73,8 +87,22 @@ chaptersResource
   .description("Change a chapter's title")
   .argument("<chapter-id>", "Chapter id")
   .requiredOption("--name <name>", "New title")
-  .action(async (id: string, opts: { name: string }) => {
+  .option("--course <course>", "Course id or slug of the chapter (required through FTO)")
+  .option("--dry-run", "Show the title before and after, change nothing (through FTO)")
+  .action(async (id: string, opts: { name: string; course?: string; dryRun?: boolean }) => {
     try {
+      if (!isDirect()) {
+        if (!opts.course) throw new CliError(2, "--course <course> is required", "The course id or slug the chapter belongs to");
+        const result = await runTool<{ chapter?: Chapter; before: string; after: string }>("thinkific_rename_chapter", {
+          course: opts.course,
+          chapterId: id,
+          name: opts.name,
+          dryRun: Boolean(opts.dryRun),
+        });
+        if (opts.dryRun || globalFlags.json || !result.chapter) output(result);
+        else log.success(`Chapter ${id} renamed "${result.before}" -> "${result.after}"`);
+        return;
+      }
       const { chapter } = await mutate<{ chapter: Chapter }>(UPDATE_CHAPTER, "updateChapter", { id, name: opts.name });
       if (globalFlags.json) output(chapter);
       else log.success(`Chapter ${chapter.id} renamed "${chapter.title}"`);
@@ -91,6 +119,7 @@ chaptersResource
   .requiredOption("--to <n>", "New position, as shown by courses get")
   .action(async (id: string, opts: { course: string; to: string }) => {
     try {
+      requireDirect("chapters move");
       const course = await getCourse(opts.course);
       const { chapter } = await mutate<{ chapter: Chapter }>(REORDER_CHAPTER, "reorderChapter", {
         chapterId: id,
@@ -112,6 +141,7 @@ chaptersResource
   .option("--yes", "Confirm the deletion")
   .action(async (id: string, opts: { yes?: boolean }) => {
     try {
+      requireDirect("chapters delete");
       const { chapter } = await gql<{ chapter: ChapterDetail | null }>(CHAPTER, { id });
       if (!chapter) throw new CliError(404, `No Thinkific chapter ${id}`);
       if (!opts.yes) {

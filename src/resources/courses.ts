@@ -6,12 +6,15 @@ import { globalFlags } from "../lib/config.js";
 import { CliError, handleError } from "../lib/errors.js";
 import { log } from "../lib/logger.js";
 import { COURSES, DUPLICATE_COURSE, UPDATE_PRODUCT } from "../lib/operations.js";
+import { runTool } from "../lib/fto.js";
 import { output } from "../lib/output.js";
 import {
   chaptersOf,
   curriculumRows,
   getCourse,
   getLesson,
+  isDirect,
+  requireDirect,
   lessonsOf,
   slugify,
   truncationWarnings,
@@ -53,6 +56,22 @@ coursesResource
   .addHelpText("after", "\nExamples:\n  esm-thinkific-cli courses list\n  esm-thinkific-cli courses list --search \"Year 1\" --status PUBLISHED --json")
   .action(async (opts: { search?: string; status?: string; archived?: boolean; limit: string }) => {
     try {
+      if (!isDirect()) {
+        const statuses = parseStatuses(opts.status);
+        if (statuses && (statuses.length > 1 || !["DRAFT", "PUBLISHED"].includes(statuses[0]!))) {
+          throw new CliError(2, "Through FTO, --status takes one of DRAFT or PUBLISHED");
+        }
+        const { courses } = await runTool<{
+          courses: { id: string; name: string; slug: string; status: string; hidden: boolean; chapters: number; lessons: number }[];
+        }>("thinkific_list_courses", {
+          search: opts.search,
+          status: statuses?.[0],
+          archived: opts.archived ? "true" : "false",
+          limit: Math.min(Number(opts.limit), 500),
+        });
+        output(courses.map(({ id, name, slug, status, hidden, chapters, lessons }) => ({ id, name, slug, status, hidden, chapters, lessons })));
+        return;
+      }
       const filter = {
         ...(opts.search && { name: opts.search }),
         ...(opts.status && { productStatus: parseStatuses(opts.status) }),
@@ -124,6 +143,7 @@ coursesResource
   .option("--dry-run", "Print what would be sent, change nothing")
   .action(async (ref: string, opts: Record<string, string | boolean | undefined>) => {
     try {
+      requireDirect("courses update");
       if (opts.hidden && opts.visible) throw new CliError(2, "Pass --hidden or --visible, not both");
       if (opts.private && opts.public) throw new CliError(2, "Pass --private or --public, not both");
       const course = await getCourse(ref);
@@ -155,6 +175,7 @@ coursesResource
   .argument("<course>", "Course id or slug")
   .action(async (ref: string) => {
     try {
+      requireDirect("courses duplicate");
       const course = await getCourse(ref);
       const { message } = await mutate<{ message: string | null }>(DUPLICATE_COURSE, "duplicateCourse", { courseId: course.id });
       if (globalFlags.json) output({ course: course.id, message });
