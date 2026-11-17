@@ -14,6 +14,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { toolClient } from "./activity.js";
 import { APP_CLI, APP_VERSION, globalFlags } from "./config.js";
 import { CliError } from "./errors.js";
 import { log } from "./logger.js";
@@ -90,6 +91,8 @@ export async function runTool<T>(name: string, input: Record<string, unknown> = 
         "x-api-key": ftoKey(profile),
         "x-tool-source": "cli",
         "x-cli-version": `${APP_CLI}/${APP_VERSION}`,
+        // Activity log of the FTO app: which CLI, from which machine.
+        "x-tool-client": toolClient(),
       },
       body: JSON.stringify(Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined))),
       signal: AbortSignal.timeout(TIMEOUT_MS),

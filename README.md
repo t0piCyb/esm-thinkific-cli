@@ -84,3 +84,13 @@ bun run schema    # refresh schema/stable.graphql and schema/beta.graphql
 - `src/lib/thinkific.ts` - course/lesson lookups, curriculum rows, HTML backups
 - `src/resources/` - courses, chapters, lessons
 - `src/commands/` - auth, raw `gql` and `rest`
+- `src/lib/activity.ts` - reports `--direct` calls to the FTO activity log
+
+## Activity log
+
+FTO mode is recorded by the FTO app itself (the CLI sends
+`x-tool-client: esm-thinkific-cli/<version> (<machine>)`). With `--direct`,
+every Thinkific GraphQL and REST call is reported to the FTO app's activity
+log (`POST <app>/api/v1/activity/report`) with your FTO API key, when you
+have one: who, which operation, the command line, this machine. Writes and
+failures also reach the team's Discord channel. A report never fails a command.

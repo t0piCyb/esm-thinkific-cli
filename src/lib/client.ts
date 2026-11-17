@@ -1,3 +1,4 @@
+import { reportOperation, reportRest } from "./activity.js";
 import { type GraphqlApi, GRAPHQL_URLS, REST_URL } from "./config.js";
 import { CliError } from "./errors.js";
 import { log } from "./logger.js";
@@ -44,15 +45,36 @@ async function post<T>(url: string, token: string, query: string, variables: Rec
 }
 
 /**
- * Runs a GraphQL operation with the profile's token. Queries go to the stable
- * API and mutations to beta (the only one with course content mutations),
- * unless `api` says otherwise. Waits once for the rate limit window when
- * Thinkific answers RATE_LIMITED.
+ * Runs a GraphQL operation with the site token (--direct) and reports it to
+ * the FTO app's activity log (`activity.ts`): who, which operation, from
+ * which machine.
  */
 export async function gql<T>(
   query: string,
   variables: Record<string, unknown> = {},
   opts: { api?: GraphqlApi } = {},
+): Promise<T> {
+  const startedAt = Date.now();
+  try {
+    const data = await runGql<T>(query, variables, opts);
+    await reportOperation(query, variables, { startedAt });
+    return data;
+  } catch (error) {
+    await reportOperation(query, variables, { startedAt, error });
+    throw error;
+  }
+}
+
+/**
+ * Runs a GraphQL operation with the profile's token. Queries go to the stable
+ * API and mutations to beta (the only one with course content mutations),
+ * unless `api` says otherwise. Waits once for the rate limit window when
+ * Thinkific answers RATE_LIMITED.
+ */
+async function runGql<T>(
+  query: string,
+  variables: Record<string, unknown>,
+  opts: { api?: GraphqlApi },
 ): Promise<T> {
   const { token } = readAccount();
   const url = GRAPHQL_URLS[opts.api ?? (isMutation(query) ? "beta" : "stable")];
@@ -124,8 +146,21 @@ export async function paginate<N>(
   return items.slice(0, limit);
 }
 
-/** REST Admin API v1 with the same token (users, enrollments, orders...). */
+/** REST Admin API v1 with the same token, reported to the FTO activity log. */
 export async function rest<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const startedAt = Date.now();
+  try {
+    const data = await runRest<T>(method, path, body);
+    await reportRest(method, path, body, { startedAt });
+    return data;
+  } catch (error) {
+    await reportRest(method, path, body, { startedAt, error });
+    throw error;
+  }
+}
+
+/** REST Admin API v1 with the same token (users, enrollments, orders...). */
+async function runRest<T>(method: string, path: string, body?: unknown): Promise<T> {
   const { token } = readAccount();
   const url = `${REST_URL}/${path.replace(/^\/+/, "")}`;
   log.debug(`${method} ${url}`);
